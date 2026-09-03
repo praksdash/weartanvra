@@ -1,0 +1,10 @@
+WEAR TANVRA full package validation
+===================================
+PASS
+- Shopify JSON files parsed
+- All section schemas parsed
+- Template section references resolved
+- Layout required Shopify objects present
+- Basic Liquid block balance passed
+- Static internal HTML links resolved
+- ZIP integrity tested after packaging

@@ -1,40 +1,24 @@
-# Fastrr Checkout Integration Plan
+# Checkout plan
 
-The website is intentionally prepared so checkout can be switched without rebuilding the storefront.
+## Current implementation
+This package now contains a working secure-payment architecture for Razorpay:
 
-## Current
-GitHub Pages is a static host. It is fine for catalog, cart and customer-facing UI, but public JavaScript must not contain merchant API secrets.
+GitHub Pages storefront
+→ Cloudflare Worker
+→ Razorpay Orders API
+→ Razorpay Checkout
+→ Worker signature verification
+→ success page
 
-## Target
-Browser -> `https://weartanvra.com/checkout.html`
--> secure serverless endpoint (Cloudflare Worker / Vercel Function)
--> Fastrr/Shiprocket Checkout APIs
--> returns a secure checkout URL/session
--> browser redirects customer to checkout
+The frontend never stores the Razorpay secret.
 
-## Front-end contract already implemented
-POST to the URL configured as `fastrrSessionEndpoint`.
+## Prepaid offer
+`PREPAID50` = ₹50 off prepaid orders.
 
-JSON payload contains:
-- customer details
-- cart items
-- size
-- color
-- quantity
-- unit price
-- subtotal
-- source domain
+The frontend displays it automatically and the Worker independently recalculates it.
+COD receives no ₹50 discount.
 
-The endpoint should return one of:
-```json
-{"checkout_url":"https://..."}
-```
-or
-```json
-{"url":"https://..."}
-```
+## Fastrr / Shiprocket Checkout
+Keep Fastrr as a later checkout option. Its current dashboard supports fixed/percentage prepaid discount rules. When WEAR TANVRA receives the required custom-platform integration details, the secure Worker can be adapted to create Fastrr checkout sessions.
 
-## Next information needed
-When Fastrr approves/onboards the custom store, use their exact API documentation/credentials to implement the server-side endpoint.
-
-Do not guess API paths or expose keys in `assets/config.js`.
+Do not put Fastrr API credentials or shared secrets in GitHub Pages JavaScript.

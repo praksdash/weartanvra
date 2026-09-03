@@ -15,7 +15,14 @@
 <main><section class="section wrap"><p class="eyebrow">CHECKOUT</p><h1 class="page-title">ALMOST YOURS.</h1>
 <div class="cart-layout">
 <div>
-<div class="notice warn"><strong>Prelaunch checkout:</strong> your bag and order form work now. Secure Fastrr checkout can be switched on after merchant/API onboarding; API secrets will not be stored in GitHub Pages.</div>
+<div class="notice">
+<strong>₹50 prepaid saving:</strong> choose <strong>Prepaid</strong> and coupon
+<strong>PREPAID50</strong> is applied automatically. COD stays at the normal price.
+</div>
+<div class="notice warn" data-payment-status>
+<strong>Payment setup:</strong> the site is ready for secure Razorpay checkout through the included Cloudflare Worker.
+Until you deploy the Worker and add gateway keys, the safe manual fallback remains enabled.
+</div>
 <form class="checkout-box" data-checkout-form style="margin-top:18px">
 <div class="form-grid">
   <div class="field"><label>FULL NAME</label><input name="name" required></div>
@@ -25,12 +32,24 @@
   <div class="field full"><label>FULL ADDRESS</label><textarea name="address" rows="4" required></textarea></div>
   <div class="field"><label>CITY</label><input name="city" required></div>
   <div class="field"><label>STATE</label><input name="state" required></div>
-  <div class="field full"><label>PAYMENT PREFERENCE</label><select name="payment"><option>Prepaid</option><option>Cash on Delivery</option></select></div>
+  <div class="field full">
+<label>PAYMENT METHOD</label>
+<div class="payment-options">
+  <label class="payment-card">
+    <input type="radio" name="payment" value="Prepaid" checked>
+    <span><strong>PREPAID</strong><small>UPI / Cards / Netbanking</small><b>Save ₹50 • PREPAID50</b></span>
+  </label>
+  <label class="payment-card">
+    <input type="radio" name="payment" value="Cash on Delivery">
+    <span><strong>CASH ON DELIVERY</strong><small>COD confirmation may be required</small><b>No prepaid discount</b></span>
+  </label>
+</div>
+</div>
 </div>
 <p class="micro">COD orders may be confirmed before we submit them for printing.</p>
-<button class="btn dark full" type="submit">CONTINUE / SUBMIT ORDER REQUEST</button>
+<button class="btn dark full" type="submit" data-pay-button>PAY SECURELY</button>
 </form>
-<div class="success-box" data-success><h2>Order request ready</h2><p>Until secure checkout is activated, you can email or copy these details.</p><pre style="white-space:pre-wrap"></pre>
+<div class="success-box" data-success><h2 data-success-title>Order request ready</h2><p data-success-message>Until secure checkout is activated, you can email or copy these details.</p><pre style="white-space:pre-wrap"></pre>
 <div class="actions"><a class="btn dark" data-email-order>EMAIL ORDER REQUEST</a><button class="btn" type="button" data-copy-order>COPY DETAILS</button></div></div>
 </div>
 <aside><div class="summary" data-checkout-summary></div></aside>
@@ -41,4 +60,4 @@
 <div class="footer-col"><strong>HELP</strong><a href="shipping.html">Shipping</a><a href="returns.html">Returns & Damage</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
 <div class="footer-col"><strong>FOLLOW</strong><a href="https://instagram.com/weartanvra" target="_blank" rel="noopener">@weartanvra</a><a href="mailto:tanvra.in@zohomail.in">tanvra.in@zohomail.in</a></div>
 </div><div class="footer-bottom wrap">© <span data-year></span> WEAR TANVRA</div></footer>
-<script src="assets/config.js"></script><script src="assets/products.js"></script><script src="assets/store.js"></script><script src="assets/app.js"></script><script src="assets/checkout.js"></script></body></html>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script><script src="assets/config.js"></script><script src="assets/products.js"></script><script src="assets/generated-products.js"></script><script src="assets/store.js"></script><script src="assets/app.js"></script><script src="assets/checkout.js"></script></body></html>

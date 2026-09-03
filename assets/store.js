@@ -26,6 +26,18 @@
     },0);
   }
   function money(v){ return "₹"+Number(v).toLocaleString("en-IN"); }
+  function prepaidDiscount(){ return Number((window.TANVRA_CONFIG||{}).prepaidCoupon?.discount||50); }
+  function shippingFor(payment){
+    const s=(window.TANVRA_CONFIG||{}).shipping||{};
+    return payment==="Prepaid" ? Number(s.prepaid||0) : Number(s.cod||0);
+  }
+  function pricing(payment){
+    const subtotal=cartTotal();
+    const prepaid=payment==="Prepaid";
+    const discount=prepaid ? Math.min(prepaidDiscount(), subtotal) : 0;
+    const shipping=shippingFor(payment);
+    return {subtotal, discount, shipping, total:Math.max(0, subtotal-discount+shipping)};
+  }
   function updateBadges(){ document.querySelectorAll("[data-cart-count]").forEach(e=>e.textContent=cartCount()); }
-  window.TanvraStore={getProducts,productById,getCart,saveCart,addItem,removeItem,updateQty,cartCount,cartTotal,money,updateBadges};
+  window.TanvraStore={getProducts,productById,getCart,saveCart,addItem,removeItem,updateQty,cartCount,cartTotal,money,prepaidDiscount,shippingFor,pricing,updateBadges};
 })();

@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "weartanvra-payments",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "vars": {
+    "ALLOWED_ORIGIN": "https://weartanvra.com",
+    "PREPAID_DISCOUNT": "50",
+    "PREPAID_SHIPPING": "68",
+    "COD_SHIPPING": "98"
+  }
+}

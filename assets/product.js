@@ -23,8 +23,8 @@ document.addEventListener("DOMContentLoaded",()=>{
       <p class="product-desc">${p.description}</p>
       <button class="btn dark full" type="button" data-add-cart>ADD TO BAG</button>
       <div class="product-notes">
-        <p><strong>Fit:</strong> Oversized. Check the size guide before ordering.</p>
-        <p><strong>Fabric:</strong> 220 GSM, 100% cotton.</p>
+        <p><strong>Fit:</strong> ${p.fit || "Oversized"}. Check the size guide before ordering.</p>
+        <p><strong>Fabric:</strong> ${p.gsm || "220 GSM"}, ${p.material || "100% Cotton"}.</p>
         <p><strong>Dispatch:</strong> Usually 24–72 business hours.</p>
         <p><strong>Damage claims:</strong> Keep a full unboxing video.</p>
       </div>

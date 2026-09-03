@@ -50,3 +50,49 @@ git push origin main
 - Confirm current supplier stock.
 - Finish Fastrr/payment onboarding.
 - Run one prepaid test order and one COD test.
+
+
+## v5 payment upgrade
+This version adds:
+- `PREPAID50`: automatic ₹50 prepaid discount.
+- COD remains full price.
+- Prepaid/COD price switching in checkout.
+- Razorpay Standard Checkout frontend.
+- Secure Cloudflare Worker backend scaffold.
+- Server-side price recalculation.
+- Server-side Razorpay signature verification.
+- COD order-reference endpoint.
+- `success.html`.
+
+See `cloudflare-worker/README.md` before enabling real payments.
+
+
+## v6 — automatic product folders
+
+You can now publish products by adding images to folders.
+
+### Oversized
+`products/oversized/<product-name>/`
+
+### Regular
+`products/regular/<product-name>/`
+
+One subfolder = one product.
+All images inside that subfolder become that product's image gallery.
+
+You can optionally add `product.json` to control the name, price and details.
+Without it, sensible defaults are used.
+
+### Automatic publishing
+The repository includes:
+
+`.github/workflows/deploy-pages.yml`
+
+On every push to `main`, GitHub Actions runs:
+
+`python scripts/build_products.py`
+
+and publishes the rebuilt site automatically.
+
+For the first setup, set:
+**GitHub repository → Settings → Pages → Source → GitHub Actions**

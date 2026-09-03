@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111111"><meta name="description" content="WEAR TANVRA order confirmation.">
+<title>Order Confirmed | WEAR TANVRA</title><link rel="stylesheet" href="assets/styles.css"></head><body><div class="announcement">COD + PREPAID • PAN-INDIA • DROP 01 PRELAUNCH</div>
+<div class="header-shell"><header class="header wrap">
+<a class="logo" href="index.html"><img src="assets/wear-tanvra-logo.webp" alt="WEAR TANVRA"></a>
+<div class="header-actions"><a href="shop.html">SHOP</a><a href="contact.html">CONTACT</a></div>
+</header></div><main><section class="section wrap"><div class="success-hero">
+<p class="eyebrow">WEAR TANVRA</p><h1 class="page-title">ORDER RECEIVED.</h1>
+<p class="lead" data-order-type>Your order has been received.</p>
+<div class="order-ref">ORDER REFERENCE <strong data-order-id>-</strong></div>
+<p>We will use the details provided at checkout for fulfilment and customer support.</p>
+<div class="actions"><a class="btn dark" href="shop.html">CONTINUE SHOPPING</a><a class="btn" href="contact.html">CONTACT US</a></div>
+</div></section></main><footer class="footer"><div class="footer-grid wrap">
+<div class="footer-col"><strong class="footer-brand">WEAR TANVRA</strong><p>Wear Your Edge.</p></div>
+<div class="footer-col"><strong>HELP</strong><a href="shipping.html">Shipping</a><a href="returns.html">Returns</a></div>
+<div class="footer-col"><strong>FOLLOW</strong><a href="https://instagram.com/weartanvra" target="_blank" rel="noopener">@weartanvra</a></div>
+</div><div class="footer-bottom wrap">© <span data-year></span> WEAR TANVRA</div></footer>
+<script src="assets/config.js"></script><script src="assets/products.js"></script><script src="assets/generated-products.js"></script><script src="assets/store.js"></script><script src="assets/app.js"></script>
+<script>
+const q=new URLSearchParams(location.search);const type=q.get("type");const order=q.get("order")||"-";
+document.querySelector("[data-order-id]").textContent=order;
+document.querySelector("[data-order-type]").textContent=type==="prepaid"?"Payment verified successfully.":"COD order request received.";
+</script></body></html>

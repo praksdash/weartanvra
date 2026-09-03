@@ -1,10 +1,5 @@
-WEAR TANVRA full package validation
-===================================
-PASS
-- Shopify JSON files parsed
-- All section schemas parsed
-- Template section references resolved
-- Layout required Shopify objects present
-- Basic Liquid block balance passed
-- Static internal HTML links resolved
-- ZIP integrity tested after packaging
+HTML pages: 12
+Product families: 3
+Published product images: 12
+Validation errors: 0
+PASS: internal HTML links, referenced assets and product-image paths verified.

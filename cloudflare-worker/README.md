@@ -1,63 +1,26 @@
-# WEAR TANVRA Payment Worker
+# WEAR TANVRA secure payment backend
 
-This Worker keeps payment secrets away from the public GitHub Pages frontend.
+This Worker is required only when you are ready to accept real/test gateway payments.
 
-## What it does
-- Recalculates product prices server-side.
-- Applies `PREPAID50` only to prepaid orders.
-- Adds the configured launch-test shipping amount.
-- Creates a Razorpay Order server-side.
-- Verifies the Razorpay payment signature server-side.
-- Creates a COD order reference without applying the ₹50 prepaid discount.
+## Architecture
+GitHub Pages storefront → Cloudflare Worker → Razorpay → D1 order database.
 
-## 1. Install
-```bash
-npm install
-```
+The Worker recalculates every product price and shipping charge server-side. The browser is never trusted for the payable amount.
 
-## 2. Add Razorpay test secrets
-Do NOT put secret keys in `wrangler.jsonc`.
+## Setup
+1. `cd cloudflare-worker`
+2. `npm install`
+3. `npx wrangler login`
+4. `npx wrangler d1 create weartanvra-orders`
+5. Copy the returned database ID into `wrangler.jsonc`.
+6. Run `npm run db:remote`
+7. Add TEST secrets:
+   - `npx wrangler secret put RAZORPAY_KEY_ID`
+   - `npx wrangler secret put RAZORPAY_KEY_SECRET`
+   - `npx wrangler secret put RAZORPAY_WEBHOOK_SECRET`
+8. `npm run deploy`
+9. In Razorpay TEST dashboard, configure webhook URL: `https://YOUR-WORKER/api/webhooks/razorpay` using the same webhook secret. Subscribe at least to `payment.captured`, `payment.failed`, and `order.paid`.
+10. In website `assets/config.js`, set `checkoutMode:"razorpay"` and `paymentBackendUrl:"https://YOUR-WORKER"`.
 
-```bash
-npx wrangler secret put RAZORPAY_KEY_ID
-npx wrangler secret put RAZORPAY_KEY_SECRET
-```
-
-Start with Razorpay TEST keys.
-
-## 3. Deploy
-```bash
-npm run deploy
-```
-
-Wrangler will give you a Worker URL such as:
-
-`https://weartanvra-payments.<account>.workers.dev`
-
-## 4. Enable payment on the website
-Edit `assets/config.js`:
-
-```js
-checkoutMode: "razorpay",
-paymentBackendUrl: "https://YOUR-WORKER-URL.workers.dev",
-```
-
-Commit and push.
-
-## 5. Test
-Use Razorpay test mode first:
-- add one product
-- choose Prepaid
-- verify ₹50 is deducted
-- verify shipping is added
-- complete a test payment
-- confirm you reach `success.html`
-
-Then test COD and verify no ₹50 discount is applied.
-
-## Important before taking real orders
-The included Worker validates and verifies payments, but it does not yet store a durable order record.
-Before production launch, connect the verified order/COD route to a database, email provider, CRM, or other order system.
-
-## Fastrr later
-Fastrr supports prepaid-discount configuration in its own checkout settings. When your Fastrr/custom-platform onboarding is ready, keep `PREPAID50` as the customer offer and replace the Razorpay adapter rather than exposing Fastrr secrets in the browser.
+## Important
+Use TEST mode first. Do not fulfil prepaid orders unless the order status is PAID/captured. The success page checks the backend order status when available.

@@ -1,52 +1,12 @@
-# Product image folders
+# Add products without editing website code
 
-This folder is the easiest way to publish new products.
+One folder = one product.
 
-## Add an oversized product
-Create a folder:
+Oversized: `products/oversized/<product-slug>/`
+Regular: `products/regular/<product-slug>/`
 
-products/oversized/my-design-name/
+Put JPG/JPEG/PNG/WEBP images directly inside that product folder. On every push to `main`, GitHub Actions runs `scripts/build_products.py` and republishes the catalogue.
 
-Put all JPG / JPEG / PNG / WEBP images for that product inside it.
+Optional `product.json` controls name, price, fit, description, colours, sorting and whether a product is published. Set `"published": false` to hide a folder.
 
-Example:
-
-products/oversized/my-design-name/
-  front.jpg
-  back.jpg
-  model-black.jpg
-  model-green.jpg
-
-You can stop there. The website builder will automatically create a product using defaults.
-
-## Add a regular-fit product
-Use:
-
-products/regular/my-design-name/
-
-## Optional product.json
-Add `product.json` in the product folder when you want to control the name, price, description, fit or colors.
-
-Example:
-
-{
-  "name": "My Design Oversized Tee",
-  "price": 899,
-  "compareAt": 1299,
-  "badge": "DROP 01",
-  "fit": "Oversized",
-  "gsm": "220 GSM",
-  "material": "100% Cotton",
-  "description": "Short product description.",
-  "sizes": ["S", "M", "L", "XL"]
-}
-
-## Publish
-Commit/push the new folder to GitHub.
-
-The included GitHub Actions workflow automatically:
-1. scans these product folders,
-2. builds `assets/generated-products.js`,
-3. deploys the updated website to GitHub Pages.
-
-You only need to configure GitHub Pages to use **GitHub Actions** once.
+Subfolders such as `print-ready/` are ignored by the website builder, so you can safely keep original 300-DPI transparent artwork there.

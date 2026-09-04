@@ -1,0 +1,8 @@
+ADD PRODUCT
+1. products\oversized\YOUR-PRODUCT\  OR products\regular\YOUR-PRODUCT\
+2. Copy images into the folder.
+3. Optional: add product.json.
+4. git add -A
+5. git commit -m "Add products"
+6. git push origin main
+GitHub Actions builds and publishes automatically.

@@ -1,166 +1,35 @@
-const PRODUCTS = {
-  "wild-instinct": { name:"Wild Instinct Oversized Tee", price:899 },
-  "ghost-compass": { name:"Ghost Compass Oversized Tee", price:899 },
-  "core-220": { name:"Core 220 Oversized Tee", price:749 }
+const PRODUCTS={
+  'oversized-rojana-ek-ghanta':899,'oversized-wild-instinct':899,'oversized-ghost-compass':899,'oversized-core-220':749,
+  'oversized-unleash-the-beast':899,'oversized-not-fast-just-furious':899
 };
-
-function json(data,status=200,origin="*"){
-  return new Response(JSON.stringify(data),{
-    status,
-    headers:{
-      "content-type":"application/json; charset=utf-8",
-      "access-control-allow-origin":origin,
-      "access-control-allow-methods":"POST,OPTIONS",
-      "access-control-allow-headers":"Content-Type"
-    }
-  });
-}
-
-function corsOrigin(request,env){
-  const origin=request.headers.get("Origin")||"";
-  const allowed=(env.ALLOWED_ORIGIN||"https://weartanvra.com").replace(/\/$/,"");
-  if(origin===allowed || origin==="http://localhost:8000" || origin==="http://127.0.0.1:8000") return origin;
-  return allowed;
-}
-
-function cleanText(v,max=300){
-  return String(v??"").trim().slice(0,max);
-}
-
-function validateCustomer(c){
-  if(!c) throw new Error("Missing customer");
-  const required=["name","phone","pincode","address","city","state"];
-  for(const k of required) if(!cleanText(c[k])) throw new Error(`Missing ${k}`);
-  if(!/^[0-9]{10}$/.test(cleanText(c.phone).replace(/\D/g,""))) throw new Error("Phone must contain 10 digits");
-  if(!/^[0-9]{6}$/.test(cleanText(c.pincode).replace(/\D/g,""))) throw new Error("Pincode must contain 6 digits");
-}
-
-function calculate(order,env){
-  if(!Array.isArray(order.items)||!order.items.length) throw new Error("Cart is empty");
-  let subtotal=0;
-  for(const item of order.items){
-    const p=PRODUCTS[item.product_id];
-    const qty=Math.max(1,Math.min(5,Number(item.qty)||1));
-    if(!p) throw new Error("Unknown product");
-    if(!["S","M","L","XL"].includes(cleanText(item.size,4))) throw new Error("Invalid size");
-    subtotal += p.price*qty;
-  }
-  const prepaid=order.payment_method==="Prepaid";
-  const discount=prepaid ? Math.min(Number(env.PREPAID_DISCOUNT||50),subtotal) : 0;
-  const shipping=prepaid ? Number(env.PREPAID_SHIPPING||68) : Number(env.COD_SHIPPING||98);
-  const total=Math.max(0,subtotal-discount+shipping);
-  return {subtotal,discount,shipping,total};
-}
-
-function basicAuth(key,secret){
-  return "Basic "+btoa(`${key}:${secret}`);
-}
-
-async function hmacHex(secret,message){
-  const key=await crypto.subtle.importKey(
-    "raw",new TextEncoder().encode(secret),
-    {name:"HMAC",hash:"SHA-256"},false,["sign"]
-  );
-  const sig=await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(message));
-  return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,"0")).join("");
-}
-
-function orderRef(prefix="WT"){
-  const now=new Date();
-  return `${prefix}-${now.toISOString().replace(/\D/g,"").slice(0,14)}-${crypto.randomUUID().slice(0,6).toUpperCase()}`;
-}
-
-export default {
-  async fetch(request,env){
-    const origin=corsOrigin(request,env);
-    if(request.method==="OPTIONS") return json({ok:true},204,origin);
-
-    const url=new URL(request.url);
-    if(request.method!=="POST") return json({error:"Method not allowed"},405,origin);
-
-    try{
-      if(url.pathname==="/api/create-order"){
-        if(!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET)
-          return json({error:"Payment gateway keys are not configured"},503,origin);
-
-        const order=await request.json();
-        validateCustomer(order.customer);
-        if(order.payment_method!=="Prepaid") throw new Error("This endpoint is for prepaid orders");
-
-        const pricing=calculate(order,env);
-        const localId=orderRef("WTP");
-        const receipt=localId.slice(0,40);
-
-        const rp=await fetch("https://api.razorpay.com/v1/orders",{
-          method:"POST",
-          headers:{
-            "Authorization":basicAuth(env.RAZORPAY_KEY_ID,env.RAZORPAY_KEY_SECRET),
-            "Content-Type":"application/json"
-          },
-          body:JSON.stringify({
-            amount:Math.round(pricing.total*100),
-            currency:"INR",
-            receipt,
-            notes:{
-              local_order_id:localId,
-              coupon:"PREPAID50",
-              source:"weartanvra.com"
-            }
-          })
-        });
-
-        const data=await rp.json();
-        if(!rp.ok) return json({error:data?.error?.description||"Razorpay order creation failed"},502,origin);
-
-        // Important: the amount is recalculated on the Worker; frontend prices are never trusted.
-        return json({
-          local_order_id:localId,
-          razorpay_order_id:data.id,
-          key_id:env.RAZORPAY_KEY_ID,
-          amount:data.amount,
-          currency:data.currency,
-          receipt,
-          pricing
-        },200,origin);
-      }
-
-      if(url.pathname==="/api/verify-payment"){
-        if(!env.RAZORPAY_KEY_SECRET)
-          return json({error:"Payment verification secret is not configured"},503,origin);
-
-        const body=await request.json();
-        const localId=cleanText(body.local_order_id,80);
-        const rpOrder=cleanText(body.razorpay_order_id,100);
-        const paymentId=cleanText(body.razorpay_payment_id,100);
-        const signature=cleanText(body.razorpay_signature,200);
-        if(!localId||!rpOrder||!paymentId||!signature) throw new Error("Missing payment verification fields");
-
-        const expected=await hmacHex(env.RAZORPAY_KEY_SECRET,`${rpOrder}|${paymentId}`);
-        if(expected!==signature) return json({verified:false,error:"Invalid payment signature"},400,origin);
-
-        return json({verified:true,order_id:localId,payment_id:paymentId},200,origin);
-      }
-
-      if(url.pathname==="/api/cod-order"){
-        const order=await request.json();
-        validateCustomer(order.customer);
-        if(order.payment_method!=="Cash on Delivery") throw new Error("This endpoint is for COD orders");
-        const pricing=calculate(order,env);
-        const localId=orderRef("WTC");
-
-        // This endpoint only validates and issues an order reference.
-        // Before production launch, connect this to your order database/email/CRM.
-        return json({
-          accepted:true,
-          order_id:localId,
-          status:"COD_CONFIRMATION_REQUIRED",
-          pricing
-        },200,origin);
-      }
-
-      return json({error:"Not found"},404,origin);
-    }catch(err){
-      return json({error:err.message||"Bad request"},400,origin);
-    }
-  }
-};
+const SIZES=new Set(['S','M','L','XL']);
+const now=()=>new Date().toISOString();
+function clean(v,n=300){return String(v??'').trim().slice(0,n)}
+function originFor(req,env){const o=req.headers.get('Origin')||'',allowed=String(env.ALLOWED_ORIGINS||'').split(',').map(x=>x.trim());return allowed.includes(o)?o:(allowed[0]||'https://weartanvra.com')}
+function headers(origin){return {'content-type':'application/json; charset=utf-8','access-control-allow-origin':origin,'vary':'Origin','access-control-allow-methods':'GET,POST,OPTIONS','access-control-allow-headers':'Content-Type,X-Razorpay-Signature,X-Razorpay-Event-Id'}}
+function json(data,status,origin){return new Response(JSON.stringify(data),{status:status||200,headers:headers(origin)})}
+function validateCustomer(c){if(!c)throw Error('Missing customer');for(const k of ['name','phone','pincode','address','city','state'])if(!clean(c[k]))throw Error(`Missing ${k}`);const phone=clean(c.phone).replace(/\D/g,'');if(!/^\d{10}$/.test(phone))throw Error('Phone must contain 10 digits');if(!/^\d{6}$/.test(clean(c.pincode)))throw Error('Pincode must contain 6 digits')}
+function price(order,env){if(!Array.isArray(order.items)||!order.items.length)throw Error('Cart is empty');let subtotal=0,items=[];for(const raw of order.items){const id=clean(raw.product_id,100),unit=PRODUCTS[id],qty=Math.max(1,Math.min(10,Number(raw.qty)||1));if(!unit)throw Error(`Unknown product: ${id}`);if(!SIZES.has(clean(raw.size,4)))throw Error('Invalid size');items.push({product_id:id,size:clean(raw.size,4),color:clean(raw.color,60),qty,unit_price:unit});subtotal+=unit*qty}const prepaid=order.payment_method==='Prepaid';if(!prepaid&&order.payment_method!=='Cash on Delivery')throw Error('Invalid payment method');const discount=prepaid?Math.min(Number(env.PREPAID_DISCOUNT||50),subtotal):0;const shipping=prepaid?Number(env.PREPAID_SHIPPING||68):Math.max(Number(env.COD_MINIMUM||98),Math.ceil(subtotal*Number(env.COD_PERCENT||2.3)/100));return {items,subtotal,discount,shipping,total:Math.max(0,subtotal-discount+shipping)}}
+function ref(prefix){return `${prefix}-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0,6).toUpperCase()}`}
+function basic(k,s){return 'Basic '+btoa(`${k}:${s}`)}
+async function hmac(secret,msg){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);const sig=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(msg));return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+function safeEqual(a,b){if(a.length!==b.length)return false;let x=0;for(let i=0;i<a.length;i++)x|=a.charCodeAt(i)^b.charCodeAt(i);return x===0}
+async function insertOrder(env,id,method,status,customer,items,p,coupon){const t=now();await env.DB.prepare(`INSERT INTO orders(id,payment_method,status,customer_json,items_json,subtotal,discount,shipping,total,currency,coupon,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(id,method,status,JSON.stringify(customer),JSON.stringify(items),p.subtotal,p.discount,p.shipping,p.total,'INR',coupon||null,t,t).run()}
+async function updateStatus(env,id,status,paymentId=null){await env.DB.prepare(`UPDATE orders SET status=?,razorpay_payment_id=COALESCE(?,razorpay_payment_id),updated_at=? WHERE id=?`).bind(status,paymentId,now(),id).run()}
+export default {async fetch(req,env){const origin=originFor(req,env),url=new URL(req.url);if(req.method==='OPTIONS')return new Response(null,{status:204,headers:headers(origin)});try{
+ if(req.method==='GET'&&url.pathname==='/api/health')return json({ok:true},200,origin);
+ if(req.method==='GET'&&url.pathname==='/api/order-status'){const id=clean(url.searchParams.get('id'),100);const row=await env.DB.prepare('SELECT id,status,payment_method,total,currency FROM orders WHERE id=?').bind(id).first();return row?json(row,200,origin):json({error:'Order not found'},404,origin)}
+ if(req.method==='POST'&&url.pathname==='/api/create-order'){
+  if(!env.RAZORPAY_KEY_ID||!env.RAZORPAY_KEY_SECRET)return json({error:'Gateway is not configured'},503,origin);const order=await req.json();validateCustomer(order.customer);if(order.payment_method!=='Prepaid')throw Error('Prepaid endpoint only');const p=price(order,env),id=ref('WTP');await insertOrder(env,id,'Prepaid','PENDING_PAYMENT',order.customer,p.items,p,'PREPAID50');
+  const rp=await fetch('https://api.razorpay.com/v1/orders',{method:'POST',headers:{Authorization:basic(env.RAZORPAY_KEY_ID,env.RAZORPAY_KEY_SECRET),'content-type':'application/json'},body:JSON.stringify({amount:p.total*100,currency:'INR',receipt:id.slice(0,40),notes:{local_order_id:id,coupon:'PREPAID50',source:'weartanvra.com'}})});const d=await rp.json();if(!rp.ok){await updateStatus(env,id,'GATEWAY_CREATE_FAILED');return json({error:d?.error?.description||'Could not create payment order'},502,origin)}await env.DB.prepare('UPDATE orders SET razorpay_order_id=?,updated_at=? WHERE id=?').bind(d.id,now(),id).run();return json({local_order_id:id,razorpay_order_id:d.id,key_id:env.RAZORPAY_KEY_ID,amount:d.amount,currency:d.currency,receipt:id,pricing:p},200,origin)
+ }
+ if(req.method==='POST'&&url.pathname==='/api/verify-payment'){
+  const b=await req.json(),id=clean(b.local_order_id,100),payment=clean(b.razorpay_payment_id,100),signature=clean(b.razorpay_signature,200);const row=await env.DB.prepare('SELECT * FROM orders WHERE id=?').bind(id).first();if(!row||!row.razorpay_order_id)return json({verified:false,error:'Order not found'},404,origin);const expected=await hmac(env.RAZORPAY_KEY_SECRET,`${row.razorpay_order_id}|${payment}`);if(!safeEqual(expected,signature))return json({verified:false,error:'Invalid payment signature'},400,origin);
+  const pr=await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(payment)}`,{headers:{Authorization:basic(env.RAZORPAY_KEY_ID,env.RAZORPAY_KEY_SECRET)}}),pd=await pr.json();if(!pr.ok||pd.order_id!==row.razorpay_order_id)return json({verified:false,error:'Payment status verification failed'},400,origin);const status=pd.status==='captured'?'PAID':pd.status==='authorized'?'AUTHORIZED':'PAYMENT_'+String(pd.status||'UNKNOWN').toUpperCase();await updateStatus(env,id,status,payment);return json({verified:true,status,order_id:id},200,origin)
+ }
+ if(req.method==='POST'&&url.pathname==='/api/cod-order'){const order=await req.json();validateCustomer(order.customer);if(order.payment_method!=='Cash on Delivery')throw Error('COD endpoint only');const p=price(order,env),id=ref('WTC');await insertOrder(env,id,'Cash on Delivery','COD_CONFIRMATION_REQUIRED',order.customer,p.items,p,null);return json({accepted:true,order_id:id,status:'COD_CONFIRMATION_REQUIRED',pricing:p},200,origin)}
+ if(req.method==='POST'&&url.pathname==='/api/webhooks/razorpay'){
+  if(!env.RAZORPAY_WEBHOOK_SECRET)return json({error:'Webhook secret not configured'},503,origin);const raw=await req.text(),sig=clean(req.headers.get('X-Razorpay-Signature'),200),eventId=clean(req.headers.get('X-Razorpay-Event-Id'),200);const expected=await hmac(env.RAZORPAY_WEBHOOK_SECRET,raw);if(!safeEqual(expected,sig))return json({error:'Invalid webhook signature'},400,origin);if(eventId){const seen=await env.DB.prepare('SELECT event_id FROM webhook_events WHERE event_id=?').bind(eventId).first();if(seen)return json({ok:true,duplicate:true},200,origin)}const evt=JSON.parse(raw),type=clean(evt.event,100),orderId=evt?.payload?.payment?.entity?.order_id||evt?.payload?.order?.entity?.id||null,paymentId=evt?.payload?.payment?.entity?.id||null;if(eventId)await env.DB.prepare('INSERT INTO webhook_events(event_id,event_type,received_at) VALUES(?,?,?)').bind(eventId,type,now()).run();if(orderId){const row=await env.DB.prepare('SELECT id FROM orders WHERE razorpay_order_id=?').bind(orderId).first();if(row){if(type==='payment.captured'||type==='order.paid')await updateStatus(env,row.id,'PAID',paymentId);else if(type==='payment.failed')await updateStatus(env,row.id,'PAYMENT_FAILED',paymentId)}}return json({ok:true},200,origin)
+ }
+ return json({error:'Not found'},404,origin)
+}catch(e){return json({error:e?.message||'Bad request'},400,origin)}}};

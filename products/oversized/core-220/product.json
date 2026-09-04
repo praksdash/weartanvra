@@ -1,0 +1,39 @@
+{
+  "name": "Core 220 Oversized Tee",
+  "price": 749,
+  "compareAt": 999,
+  "badge": "CORE",
+  "fit": "Oversized",
+  "gsm": "220 GSM",
+  "material": "100% Cotton",
+  "print": "Minimal / no large graphic",
+  "description": "The clean base silhouette: heavyweight 220 GSM cotton, oversized proportions and a simple everyday streetwear finish.",
+  "sizes": [
+    "S",
+    "M",
+    "L",
+    "XL"
+  ],
+  "colors": [
+    {
+      "name": "Black",
+      "hex": "#111111",
+      "image": "front-black.webp"
+    },
+    {
+      "name": "Beige",
+      "hex": "#d8b36f",
+      "image": "front-beige.webp"
+    },
+    {
+      "name": "White",
+      "hex": "#f5f5f5",
+      "image": "front-white.webp"
+    },
+    {
+      "name": "Avocado Green",
+      "hex": "#446b18",
+      "image": "front-green.webp"
+    }
+  ]
+}

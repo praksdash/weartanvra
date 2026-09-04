@@ -1,12 +1,11 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "weartanvra-payments",
-  "main": "src/index.js",
-  "compatibility_date": "2026-09-01",
-  "vars": {
-    "ALLOWED_ORIGIN": "https://weartanvra.com",
-    "PREPAID_DISCOUNT": "50",
-    "PREPAID_SHIPPING": "68",
-    "COD_SHIPPING": "98"
-  }
+  "$schema":"node_modules/wrangler/config-schema.json",
+  "name":"weartanvra-payments",
+  "main":"src/index.js",
+  "compatibility_date":"2026-09-01",
+  "vars":{
+    "ALLOWED_ORIGINS":"https://weartanvra.com,https://www.weartanvra.com",
+    "PREPAID_DISCOUNT":"50","PREPAID_SHIPPING":"68","COD_MINIMUM":"98","COD_PERCENT":"2.3"
+  },
+  "d1_databases":[{"binding":"DB","database_name":"weartanvra-orders","database_id":"REPLACE_WITH_D1_DATABASE_ID"}]
 }

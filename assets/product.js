@@ -1,46 +1,12 @@
-
-document.addEventListener("DOMContentLoaded",()=>{
-  const root=document.querySelector("[data-product-root]");
-  if(!root) return;
-  const id=new URLSearchParams(location.search).get("id");
-  const p=TanvraStore.productById(id) || TanvraStore.getProducts()[0];
-  if(!p) return;
-  document.title=p.name+" | WEAR TANVRA";
-  let selectedSize="";
-  let selectedColor=p.colors[0].name;
-
-  root.innerHTML=`
-    <div class="gallery">${p.images.map(src=>`<img src="${src}" alt="${p.name}" loading="lazy">`).join("")}</div>
-    <aside class="product-panel">
-      <p class="eyebrow">${p.badge}</p>
-      <h1>${p.name}</h1>
-      <p class="product-subtitle">${p.subtitle}</p>
-      <div class="price"><s>${TanvraStore.money(p.compareAt)}</s><strong>${TanvraStore.money(p.price)}</strong></div>
-      <div class="option-title">SELECT SIZE</div>
-      <div class="size-row">${p.sizes.map(s=>`<button class="size-btn" type="button" data-size="${s}">${s}</button>`).join("")}</div>
-      <div class="option-title">SELECT COLOR</div>
-      <div class="color-row">${p.colors.map((c,i)=>`<button class="color-btn ${i===0?"active":""}" type="button" data-color="${c.name}"><span class="color-dot" style="background:${c.hex}"></span>${c.name}</button>`).join("")}</div>
-      <p class="product-desc">${p.description}</p>
-      <button class="btn dark full" type="button" data-add-cart>ADD TO BAG</button>
-      <div class="product-notes">
-        <p><strong>Fit:</strong> ${p.fit || "Oversized"}. Check the size guide before ordering.</p>
-        <p><strong>Fabric:</strong> ${p.gsm || "220 GSM"}, ${p.material || "100% Cotton"}.</p>
-        <p><strong>Dispatch:</strong> Usually 24–72 business hours.</p>
-        <p><strong>Damage claims:</strong> Keep a full unboxing video.</p>
-      </div>
-    </aside>`;
-
-  root.querySelectorAll("[data-size]").forEach(btn=>btn.addEventListener("click",()=>{
-    root.querySelectorAll("[data-size]").forEach(x=>x.classList.remove("active"));
-    btn.classList.add("active"); selectedSize=btn.dataset.size;
-  }));
-  root.querySelectorAll("[data-color]").forEach(btn=>btn.addEventListener("click",()=>{
-    root.querySelectorAll("[data-color]").forEach(x=>x.classList.remove("active"));
-    btn.classList.add("active"); selectedColor=btn.dataset.color;
-  }));
-  root.querySelector("[data-add-cart]").addEventListener("click",()=>{
-    if(!selectedSize){ alert("Please select a size."); return; }
-    TanvraStore.addItem({productId:p.id,size:selectedSize,color:selectedColor,qty:1});
-    location.href="cart.html";
-  });
+document.addEventListener('DOMContentLoaded',()=>{
+ const root=document.querySelector('[data-product-root]');if(!root)return; const id=new URLSearchParams(location.search).get('id'),p=TanvraStore.byId(id); const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ if(!p){root.innerHTML='<div class="empty-state"><h1>PRODUCT NOT FOUND</h1><p>This product may have been removed or the link is incorrect.</p><a class="btn dark" href="shop.html">BACK TO SHOP</a></div>';return}
+ document.title=`${p.name} | WEAR TANVRA`;
+ let color=p.colors?.[0]?.name||'As Shown', size=p.sizes?.[0]||'M', active=0;
+ root.innerHTML=`<div class="product-layout"><section><div class="main-product-image"><img data-main-image src="${esc(p.images[0])}" alt="${esc(p.name)}"></div><div class="thumbs">${p.images.map((im,i)=>`<button class="thumb ${i===0?'active':''}" data-thumb="${i}"><img src="${esc(im)}" alt="${esc(p.name)} view ${i+1}"></button>`).join('')}</div></section><section class="product-info"><p class="eyebrow">${esc(p.badge)}</p><h1>${esc(p.name)}</h1><p class="product-subtitle">${esc(p.subtitle)}</p><div class="price big"><strong>${TanvraStore.money(p.price)}</strong>${p.compareAt>p.price?`<s>${TanvraStore.money(p.compareAt)}</s>`:''}</div><p>${esc(p.description)}</p><hr><label class="choice-label">COLOUR <strong data-color-name>${esc(color)}</strong></label><div class="swatches">${p.colors.map((c,i)=>`<button class="swatch ${i===0?'active':''}" data-color="${esc(c.name)}" data-image="${esc(c.image||p.images[0])}" title="${esc(c.name)}" style="--sw:${esc(c.hex||'#777')}"></button>`).join('')}</div><label class="choice-label">SIZE</label><div class="sizes">${p.sizes.map((s,i)=>`<button class="size ${i===0?'active':''}" data-size="${esc(s)}">${esc(s)}</button>`).join('')}</div><a class="size-link" href="size-guide.html">View size guide</a><button class="btn dark full add-cart" data-add>ADD TO BAG • ${TanvraStore.money(p.price)}</button><div class="product-facts"><p><b>Fit:</b> ${esc(p.fit)}</p><p><b>Fabric:</b> ${esc(p.gsm)}, ${esc(p.material)}</p><p><b>Print:</b> ${esc(p.print)}</p></div></section></div>`;
+ const main=root.querySelector('[data-main-image]');
+ root.querySelectorAll('[data-thumb]').forEach(b=>b.onclick=()=>{active=+b.dataset.thumb;main.src=p.images[active];root.querySelectorAll('[data-thumb]').forEach(x=>x.classList.toggle('active',x===b))});
+ root.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{color=b.dataset.color;root.querySelector('[data-color-name]').textContent=color;main.src=b.dataset.image;root.querySelectorAll('[data-color]').forEach(x=>x.classList.toggle('active',x===b))});
+ root.querySelectorAll('[data-size]').forEach(b=>b.onclick=()=>{size=b.dataset.size;root.querySelectorAll('[data-size]').forEach(x=>x.classList.toggle('active',x===b))});
+ root.querySelector('[data-add]').onclick=()=>{TanvraStore.add({productId:p.id,size,color,qty:1});root.querySelector('[data-add]').textContent='ADDED ✓';setTimeout(()=>root.querySelector('[data-add]').textContent=`ADD TO BAG • ${TanvraStore.money(p.price)}`,1200)};
 });

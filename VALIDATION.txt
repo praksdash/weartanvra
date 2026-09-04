@@ -1,5 +1,12 @@
-HTML pages: 12
-Product families: 3
-Published product images: 12
-Validation errors: 0
-PASS: internal HTML links, referenced assets and product-image paths verified.
+WEAR TANVRA v8 validation
+Products: 6
+HTML pages: 13
+JS files checked: 11
+Oversized MRP/Sale: ₹1299 / ₹899
+Free shipping threshold: ₹799
+PREPAID50: ₹50
+Rojana Ek Ghanta T-shirt mockups: 4
+Shop Add to Bag + Checkout buttons: yes
+Worker server-side shipping rules: yes
+Errors: 0
+PASS: all validation checks passed.

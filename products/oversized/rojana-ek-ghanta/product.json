@@ -9,7 +9,7 @@
   "print": "Front + back graphic",
   "featured": true,
   "sort": 1,
-  "description": "An Odisha-inspired one-hour-a-day movement graphic. Compact campaign artwork on the front and a larger fitness-and-Odisha composition on the back. Transparent print-ready PNG artwork is included in the product folder for your test order.",
+  "description": "Rojana Ek Ghanta — an Odisha-inspired one-hour-a-day movement tee. Small campaign artwork on the front and a larger statement graphic on the back. Website images are T-shirt mockups; transparent print-ready artwork remains inside print-ready/ for production.",
   "sizes": [
     "S",
     "M",
@@ -20,12 +20,12 @@
     {
       "name": "Black",
       "hex": "#111111",
-      "image": "front.webp"
+      "image": "front-black-tee.webp"
     },
     {
       "name": "White",
       "hex": "#f4f4f4",
-      "image": "front.webp"
+      "image": "front-white-tee.webp"
     }
   ]
 }

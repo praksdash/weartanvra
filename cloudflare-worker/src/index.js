@@ -1,7 +1,4 @@
-const PRODUCTS={
-  'oversized-rojana-ek-ghanta':899,'oversized-wild-instinct':899,'oversized-ghost-compass':899,'oversized-core-220':749,
-  'oversized-unleash-the-beast':899,'oversized-not-fast-just-furious':899
-};
+import { PRODUCTS } from './catalog.js';
 const SIZES=new Set(['S','M','L','XL']);
 const now=()=>new Date().toISOString();
 function clean(v,n=300){return String(v??'').trim().slice(0,n)}
@@ -9,7 +6,49 @@ function originFor(req,env){const o=req.headers.get('Origin')||'',allowed=String
 function headers(origin){return {'content-type':'application/json; charset=utf-8','access-control-allow-origin':origin,'vary':'Origin','access-control-allow-methods':'GET,POST,OPTIONS','access-control-allow-headers':'Content-Type,X-Razorpay-Signature,X-Razorpay-Event-Id'}}
 function json(data,status,origin){return new Response(JSON.stringify(data),{status:status||200,headers:headers(origin)})}
 function validateCustomer(c){if(!c)throw Error('Missing customer');for(const k of ['name','phone','pincode','address','city','state'])if(!clean(c[k]))throw Error(`Missing ${k}`);const phone=clean(c.phone).replace(/\D/g,'');if(!/^\d{10}$/.test(phone))throw Error('Phone must contain 10 digits');if(!/^\d{6}$/.test(clean(c.pincode)))throw Error('Pincode must contain 6 digits')}
-function price(order,env){if(!Array.isArray(order.items)||!order.items.length)throw Error('Cart is empty');let subtotal=0,items=[];for(const raw of order.items){const id=clean(raw.product_id,100),unit=PRODUCTS[id],qty=Math.max(1,Math.min(10,Number(raw.qty)||1));if(!unit)throw Error(`Unknown product: ${id}`);if(!SIZES.has(clean(raw.size,4)))throw Error('Invalid size');items.push({product_id:id,size:clean(raw.size,4),color:clean(raw.color,60),qty,unit_price:unit});subtotal+=unit*qty}const prepaid=order.payment_method==='Prepaid';if(!prepaid&&order.payment_method!=='Cash on Delivery')throw Error('Invalid payment method');const discount=prepaid?Math.min(Number(env.PREPAID_DISCOUNT||50),subtotal):0;const shipping=prepaid?Number(env.PREPAID_SHIPPING||68):Math.max(Number(env.COD_MINIMUM||98),Math.ceil(subtotal*Number(env.COD_PERCENT||2.3)/100));return {items,subtotal,discount,shipping,total:Math.max(0,subtotal-discount+shipping)}}
+function price(order,env){
+ if(!Array.isArray(order.items)||!order.items.length)throw Error('Cart is empty');
+ let subtotal=0,items=[];
+ for(const raw of order.items){
+  const id=clean(raw.product_id,100),unit=PRODUCTS[id],qty=Math.max(1,Math.min(10,Number(raw.qty)||1));
+  if(!unit)throw Error(`Unknown product: ${id}`);
+  if(!SIZES.has(clean(raw.size,4)))throw Error('Invalid size');
+  items.push({product_id:id,size:clean(raw.size,4),color:clean(raw.color,60),qty,unit_price:unit});
+  subtotal+=unit*qty;
+ }
+ const prepaid=order.payment_method==='Prepaid';
+ if(!prepaid&&order.payment_method!=='Cash on Delivery')throw Error('Invalid payment method');
+
+ const discount=prepaid?Math.min(Number(env.PREPAID_DISCOUNT||50),subtotal):0;
+ const freeAbove=Number(env.FREE_SHIPPING_ABOVE||799);
+ const freeShipping=subtotal>=freeAbove;
+
+ // Below ₹799 we calculate the normal shipping charge for transparency,
+ // but fully offset it because shipping is included in the advertised price.
+ let shipping=0;
+ if(!freeShipping){
+  shipping=prepaid
+   ? Number(env.PREPAID_SHIPPING_BELOW_THRESHOLD||68)
+   : Math.max(
+       Number(env.COD_MINIMUM_BELOW_THRESHOLD||98),
+       Math.ceil(subtotal*Number(env.COD_PERCENT_BELOW_THRESHOLD||2.3)/100)
+     );
+ }
+ const shippingIncludedDiscount=freeShipping?0:shipping;
+ const payableShipping=Math.max(0,shipping-shippingIncludedDiscount);
+
+ return {
+   items,
+   subtotal,
+   discount,
+   shipping,
+   shippingIncludedDiscount,
+   payableShipping,
+   freeShipping,
+   freeShippingThreshold:freeAbove,
+   total:Math.max(0,subtotal-discount+payableShipping)
+ };
+}
 function ref(prefix){return `${prefix}-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0,6).toUpperCase()}`}
 function basic(k,s){return 'Basic '+btoa(`${k}:${s}`)}
 async function hmac(secret,msg){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);const sig=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(msg));return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('')}

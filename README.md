@@ -24,3 +24,64 @@ Create `products/oversized/my-product/` or `products/regular/my-product/`, copy 
 
 ## Payment
 The website intentionally ships in `prelaunch` mode. Follow `cloudflare-worker/README.md`, use Razorpay TEST mode, then change `assets/config.js` only after the Worker is deployed.
+
+
+# v8 update — pricing, free shipping, stronger shopping flow
+
+Customer-facing launch pricing for the current oversized catalogue is now:
+- MRP: ₹1,299
+- Sale price: ₹899
+- Free shipping when merchandise subtotal is ₹799 or more
+- PREPAID50: extra ₹50 off prepaid orders
+
+Example single ₹899 tee:
+- COD: ₹899 total, shipping FREE
+- Prepaid: ₹849 total after PREPAID50, shipping FREE
+
+## Product cards
+Every shop card now has:
+- Add to Bag
+- Checkout
+
+Checkout adds the default first size/color. Customers who want another size/color should open the product page and select it before adding/buying.
+
+## Rojana Ek Ghanta
+The website gallery now uses T-shirt mockups rather than showing only isolated/sticker artwork.
+The original transparent print-ready PNG files remain under:
+
+`products/oversized/rojana-ek-ghanta/print-ready/`
+
+## Payment security
+Pricing is recalculated on the Cloudflare Worker. The Worker imports a generated product price catalogue from:
+
+`cloudflare-worker/src/catalog.js`
+
+Run `python scripts/build_products.py` after product/pricing changes before deploying the Worker.
+
+The website remains in `prelaunch` checkout mode until Razorpay TEST setup is complete.
+
+
+## v9 — shipping included display
+
+Checkout now keeps the advertised product total stable.
+
+### Orders below ₹799
+Example COD on a ₹749 product:
+
+- Product total: ₹749
+- Shipping: ~~₹98~~
+- Shipping included: −₹98
+- Final payable: ₹749
+
+Example prepaid on a ₹749 product:
+
+- Product total: ₹749
+- PREPAID50: −₹50
+- Shipping: ~~₹68~~
+- Shipping included: −₹68
+- Final payable: ₹699
+
+### Orders ₹799+
+Shipping is shown simply as `FREE`.
+
+The same pricing rule is recalculated in the Cloudflare Worker so the browser and payment amount cannot disagree.

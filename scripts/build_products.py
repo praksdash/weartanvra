@@ -4,6 +4,7 @@ ROOT=Path(__file__).resolve().parents[1]
 PRODUCTS=ROOT/'products'
 OUT_JS=ROOT/'assets'/'generated-products.js'
 OUT_JSON=ROOT/'assets'/'generated-products.json'
+WORKER_CATALOG=ROOT/'cloudflare-worker'/'src'/'catalog.js'
 IMAGE_EXTS={'.jpg','.jpeg','.png','.webp'}
 DEFAULTS={
  'oversized':{'price':899,'compareAt':1299,'badge':'NEW','fit':'Oversized','gsm':'220 GSM','material':'100% Cotton','sizes':['S','M','L','XL']},
@@ -58,5 +59,7 @@ def build():
  products.sort(key=lambda p:(p['sort'],p['name'].lower()))
  OUT_JSON.write_text(json.dumps(products,indent=2,ensure_ascii=False),encoding='utf-8')
  OUT_JS.write_text('window.TANVRA_PRODUCTS='+json.dumps(products,ensure_ascii=False,separators=(',',':'))+';\n',encoding='utf-8')
- print(f'Built {len(products)} products')
+ catalog={p['id']:int(p['price']) for p in products}
+ WORKER_CATALOG.write_text('export const PRODUCTS='+json.dumps(catalog,separators=(',',':'))+';\n',encoding='utf-8')
+ print(f'Built {len(products)} products and Worker catalog')
 if __name__=='__main__': build()

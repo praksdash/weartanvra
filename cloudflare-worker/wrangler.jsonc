@@ -10,7 +10,12 @@
     "ORDER_ENVIRONMENT": "LIVE",
     "OWNER_EMAIL": "weartanvra@gmail.com",
     "STORE_URL": "https://weartanvra.com",
-    "FROM_EMAIL": "WEAR TANVRA <orders@weartanvra.com>"
+    "FROM_EMAIL": "WEAR TANVRA <orders@weartanvra.com>",
+    "INVOICE_SELLER_NAME": "WEAR TANVRA",
+    "INVOICE_SELLER_ADDRESS": "",
+    "INVOICE_SELLER_EMAIL": "weartanvra@gmail.com",
+    "INVOICE_GSTIN": "",
+    "INVOICE_HSN": ""
   },
   "d1_databases":[{"binding":"DB","database_name":"weartanvra-orders","database_id":"4529f8e8-38d7-4506-b909-14ed5afa00fd"}]
 }

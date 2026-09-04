@@ -1,0 +1,12 @@
+WEAR TANVRA v16 validation
+- Product catalogue rebuilt: PASS (6 products)
+- Core 220 secure server price: ₹749 / compare-at ₹999: PASS
+- JavaScript syntax checks: PASS
+- D1 migrations 0001-0006 applied to fresh SQLite schema: PASS
+- Invoice columns/index/sequence table: PASS
+- Customer invoice PDF endpoint requires customer bearer token + matching order email: PASS (code review)
+- Admin invoice PDF endpoint remains behind ADMIN_TOKEN: PASS (code review)
+- Invoice eligibility: prepaid PAID+; COD COD_CONFIRMED+: PASS (code review)
+- Invoice seller snapshot stored at first issuance: PASS (code review)
+- GST tax-invoice mode: intentionally disabled: PASS
+- No real Razorpay/Admin/Resend secret embedded in package: PASS (example placeholders only)

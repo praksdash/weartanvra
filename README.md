@@ -164,3 +164,7 @@ See `PRICE-UPDATE-GUIDE.md`.
 Adds D1 rate limiting, strict browser-origin checks, request size limits, security headers, exact Razorpay payment amount verification, safer webhook state handling, and migration `0005_security_hardening.sql`.
 
 Read `SECURITY-V15.md` before deployment. Apply the D1 migration before deploying the Worker.
+
+## v16 — Customer Invoice + PDF Download
+
+v16 adds authenticated invoice issuance and PDF downloads for customers and admins. Apply `0006_customer_invoices.sql` before deploying. Seller address is intentionally blank and must be configured before new invoices can be issued. See `INVOICES-V16.md`.

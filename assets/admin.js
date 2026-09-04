@@ -28,6 +28,16 @@ async function api(path,options={}){
   return d;
 }
 
+async function downloadAdminInvoice(id){
+  const r=await fetch(backend()+'/api/admin/invoice.pdf?id='+encodeURIComponent(id),{headers:{'Authorization':'Bearer '+state.token}});
+  if(r.status===401){lock();throw Error('Admin token is not valid')}
+  if(!r.ok){const d=await r.json().catch(()=>({}));throw Error(d.error||'Could not download invoice')}
+  const blob=await r.blob(),cd=r.headers.get('content-disposition')||'';
+  const m=cd.match(/filename=\"?([^\";]+)\"?/i);
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=m?.[1]||('WEAR-TANVRA-'+id+'-invoice.pdf');
+  document.body.appendChild(a);a.click();const u=a.href;a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);
+}
+
 function showMessage(text,type='ok'){
   const box=$('[data-message]');
   box.hidden=false; box.textContent=text; box.dataset.type=type;
@@ -169,7 +179,7 @@ async function openOrder(id){
           Discount: -${money(o.discount)}<br>
           Shipping shown: ${money(o.shipping)}<br>
           Shipping included: -${money(o.shipping_discount)}<br>
-          <b>Final: ${money(o.total)}</b></p>
+          <b>Final: ${money(o.total)}</b>${o.invoice_number?`<br><b>Invoice:</b> ${esc(o.invoice_number)}`:''}</p>
         </section>
       </div>
 
@@ -196,6 +206,7 @@ async function openOrder(id){
           <input data-admin-note placeholder="Optional note" value="${esc(o.admin_note||'')}">
           <button class="btn dark" type="button" data-save-status>SAVE STATUS</button>
         </div>
+        ${(o.invoice_number || ['PAID','COD_CONFIRMED','SENT_TO_TADDA','PRINTING','DISPATCHED','DELIVERED'].includes(o.status))?'<button class="btn dark" type="button" data-download-admin-invoice>DOWNLOAD INVOICE PDF</button>':''}
         <button class="btn" type="button" data-resend-email>RESEND OWNER EMAIL</button><button class="btn" type="button" data-resend-customer-email>RESEND CUSTOMER EMAIL</button>
       </section>
 
@@ -221,6 +232,14 @@ async function openOrder(id){
       showMessage('Order status updated.');
       await load();
       await openOrder(o.id);
+    };
+
+    const invoiceBtn=$('[data-download-admin-invoice]');
+    if(invoiceBtn) invoiceBtn.onclick=async()=>{
+      invoiceBtn.disabled=true;
+      try{await downloadAdminInvoice(o.id);showMessage('Invoice downloaded.');}
+      catch(e){showMessage(e.message,'error')}
+      finally{invoiceBtn.disabled=false}
     };
 
     $('[data-resend-email]').onclick=async()=>{

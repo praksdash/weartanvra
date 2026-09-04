@@ -250,6 +250,185 @@ async function insertOrder(env,id,method,status,customer,items,p,coupon){
   await event(env,id,'ORDER_CREATED',status,environment);
 }
 
+function invoiceEligible(order){
+  if(!order) return false;
+  if(order.invoice_number) return true;
+  const later=new Set(['SENT_TO_TADDA','PRINTING','DISPATCHED','DELIVERED']);
+  if(order.payment_method==='Prepaid') return order.status==='PAID' || later.has(order.status);
+  if(order.payment_method==='Cash on Delivery') return order.status==='COD_CONFIRMED' || later.has(order.status);
+  return false;
+}
+
+function fiscalYearLabel(dateLike){
+  const d=new Date(dateLike||Date.now());
+  // Invoice accounting follows India time for fiscal-year rollover.
+  const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Kolkata',year:'numeric',month:'numeric'}).formatToParts(d);
+  const y=Number(parts.find(x=>x.type==='year')?.value||d.getUTCFullYear());
+  const m=Number(parts.find(x=>x.type==='month')?.value||(d.getUTCMonth()+1));
+  const start=m>=4?y:y-1;
+  return `${start}-${String((start+1)%100).padStart(2,'0')}`;
+}
+
+async function ensureInvoice(env,orderId){
+  let row=await env.DB.prepare(`SELECT * FROM orders WHERE id=?`).bind(orderId).first();
+  if(!row) throw Error('Order not found');
+  if(row.invoice_number) return row;
+  if(!invoiceEligible(row)) return row;
+  if(!invoiceConfigured(env)) throw Error('Invoice seller address/email is not configured');
+
+  const fy=fiscalYearLabel(row.created_at||now());
+  const seq=await env.DB.prepare(`INSERT INTO invoice_sequences(fiscal_year,last_number,updated_at)
+    VALUES(?,1,?)
+    ON CONFLICT(fiscal_year) DO UPDATE SET last_number=last_number+1,updated_at=excluded.updated_at
+    RETURNING last_number`).bind(fy,now()).first();
+  const n=Number(seq?.last_number||1);
+  const invoiceNumber=`WT/${fy}/${String(n).padStart(6,'0')}`;
+  const issuedAt=now();
+
+  // Another concurrent request may already have issued it; preserve the first number.
+  const sellerSnapshot=JSON.stringify(invoiceSeller(env));
+  await env.DB.prepare(`UPDATE orders SET invoice_number=?,invoice_issued_at=?,invoice_seller_json=?,updated_at=?
+    WHERE id=? AND invoice_number IS NULL`).bind(invoiceNumber,issuedAt,sellerSnapshot,issuedAt,orderId).run();
+  row=await env.DB.prepare(`SELECT * FROM orders WHERE id=?`).bind(orderId).first();
+  if(row?.invoice_number===invoiceNumber){
+    try{await event(env,orderId,'INVOICE_ISSUED',row.status,invoiceNumber);}catch{}
+  }
+  return row;
+}
+
+function invoiceSeller(env){
+  return {
+    name:clean(env.INVOICE_SELLER_NAME||'WEAR TANVRA',120),
+    address:clean(env.INVOICE_SELLER_ADDRESS||'',500),
+    email:clean(env.INVOICE_SELLER_EMAIL||env.OWNER_EMAIL||'',120),
+    gstin:clean(env.INVOICE_GSTIN||'',30),
+    hsn:clean(env.INVOICE_HSN||'',20)
+  };
+}
+
+function invoiceConfigured(env){
+  const s=invoiceSeller(env);
+  return !!(s.name && s.address && s.email);
+}
+
+function productLabel(id){
+  return String(id||'').replace(/^oversized-|^regular-/,'').split('-').filter(Boolean)
+    .map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(' ');
+}
+
+function invoicePayload(order,env){
+  const customer=JSON.parse(order.customer_json||'{}');
+  const items=JSON.parse(order.items_json||'[]').map(i=>({
+    ...i,name:productLabel(i.product_id),line_total:Number(i.unit_price||0)*Number(i.qty||0)
+  }));
+  return {
+    invoice_number:order.invoice_number,
+    invoice_issued_at:order.invoice_issued_at,
+    order_id:order.id,
+    order_date:order.created_at,
+    payment_method:order.payment_method,
+    payment_id:order.razorpay_payment_id||null,
+    status:order.status,
+    currency:order.currency||'INR',
+    seller:order.invoice_seller_json ? JSON.parse(order.invoice_seller_json) : invoiceSeller(env),
+    customer,
+    items,
+    subtotal:Number(order.subtotal||0),
+    discount:Number(order.discount||0),
+    shipping:Number(order.shipping||0),
+    shipping_discount:Number(order.shipping_discount||0),
+    total:Number(order.total||0),
+    gst_tax_invoice:false
+  };
+}
+
+function pdfAscii(v){
+  return String(v??'').normalize('NFKD').replace(/[^\x20-\x7E]/g,'?');
+}
+function pdfEsc(v){return pdfAscii(v).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');}
+function pdfDate(v){try{return new Date(v).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'medium',timeStyle:'short'})}catch{return String(v||'')}}
+
+function invoicePdfBytes(inv){
+  const lines=[];
+  lines.push('WEAR TANVRA');
+  lines.push('COMMERCIAL INVOICE');
+  lines.push('');
+  lines.push(`Invoice No: ${inv.invoice_number}`);
+  lines.push(`Invoice Date: ${pdfDate(inv.invoice_issued_at)}`);
+  lines.push(`Order ID: ${inv.order_id}`);
+  lines.push(`Order Date: ${pdfDate(inv.order_date)}`);
+  lines.push(`Payment: ${inv.payment_method}${inv.payment_id?' | '+inv.payment_id:''}`);
+  lines.push('');
+  lines.push(`Seller: ${inv.seller.name}`);
+  if(inv.seller.address) lines.push(`Seller Address: ${inv.seller.address}`);
+  if(inv.seller.email) lines.push(`Seller Email: ${inv.seller.email}`);
+  if(inv.seller.gstin) lines.push(`GSTIN: ${inv.seller.gstin}`);
+  lines.push('');
+  lines.push(`Bill / Ship To: ${inv.customer.name||''}`);
+  lines.push(`${inv.customer.address||''}`);
+  lines.push(`${inv.customer.city||''}, ${inv.customer.state||''} - ${inv.customer.pincode||''}`);
+  lines.push(`Phone: ${inv.customer.phone||''} | Email: ${inv.customer.email||''}`);
+  lines.push('');
+  lines.push('ITEMS');
+  inv.items.forEach((i,idx)=>{
+    lines.push(`${idx+1}. ${i.name} | ${i.color||''} / ${i.size||''} | Qty ${i.qty} | INR ${i.line_total}`);
+    if(inv.seller.hsn) lines.push(`   HSN: ${inv.seller.hsn}`);
+  });
+  lines.push('');
+  lines.push(`Product total: INR ${inv.subtotal}`);
+  if(inv.discount) lines.push(`Discount: -INR ${inv.discount}`);
+  if(inv.shipping) lines.push(`Shipping shown: INR ${inv.shipping}`);
+  if(inv.shipping_discount) lines.push(`Shipping included discount: -INR ${inv.shipping_discount}`);
+  lines.push(`TOTAL: INR ${inv.total}`);
+  lines.push('');
+  lines.push('This document is generated electronically by WEAR TANVRA.');
+  lines.push('GST tax-invoice mode is not enabled in v16; no GST amount is represented here.');
+
+  const perPage=44;
+  const pages=[];
+  for(let i=0;i<lines.length;i+=perPage) pages.push(lines.slice(i,i+perPage));
+
+  // PDF objects: catalog(1), pages(2), font(3), then page/content pairs.
+  const objs={};
+  objs[1]='<< /Type /Catalog /Pages 2 0 R >>';
+  const pageIds=[];
+  let objId=4;
+  for(const pg of pages){
+    const pageId=objId++, contentId=objId++;
+    pageIds.push(pageId);
+    let y=800,content='';
+    pg.forEach((line,idx)=>{
+      const size=(idx===0?16:(idx===1?13:9));
+      content+=`BT /F1 ${size} Tf 40 ${y} Td (${pdfEsc(line)}) Tj ET\n`;
+      y-=idx<2?24:16;
+    });
+    objs[pageId]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents ${contentId} 0 R >>`;
+    objs[contentId]=`<< /Length ${content.length} >>\nstream\n${content}endstream`;
+  }
+  objs[2]=`<< /Type /Pages /Count ${pageIds.length} /Kids [${pageIds.map(x=>x+' 0 R').join(' ')}] >>`;
+  objs[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+  const maxId=Math.max(...Object.keys(objs).map(Number));
+  let pdf='%PDF-1.4\n%WT16\n',offsets=[0];
+  for(let i=1;i<=maxId;i++){
+    offsets[i]=pdf.length;
+    pdf+=`${i} 0 obj\n${objs[i]}\nendobj\n`;
+  }
+  const xref=pdf.length;
+  pdf+=`xref\n0 ${maxId+1}\n0000000000 65535 f \n`;
+  for(let i=1;i<=maxId;i++) pdf+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
+  pdf+=`trailer\n<< /Size ${maxId+1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return new TextEncoder().encode(pdf);
+}
+
+function binaryHeaders(origin,contentType,filename){
+  return {
+    'content-type':contentType,
+    'content-disposition':`attachment; filename="${filename}"`,
+    'access-control-allow-origin':origin,
+    'vary':'Origin','access-control-expose-headers':'Content-Disposition','cache-control':'private, no-store',...securityHeaders()
+  };
+}
+
 async function updateStatus(env,id,status,paymentId=null,note=null){
   const current=await env.DB.prepare(
     `SELECT payment_method FROM orders WHERE id=?`
@@ -264,6 +443,10 @@ async function updateStatus(env,id,status,paymentId=null,note=null){
      WHERE id=?`
   ).bind(status,paymentId,note,now(),id).run();
   await event(env,id,'STATUS_CHANGED',status,note);
+  try{ await ensureInvoice(env,id); }catch(e){
+    // Invoice migration/configuration errors should surface during deployment testing,
+    // but must not corrupt the already-valid order status transition.
+  }
 }
 
 function money(n){ return `₹${Number(n||0).toLocaleString('en-IN')}`; }
@@ -420,8 +603,9 @@ function customerOrderEmailHtml(order){
     ${Number(order.discount)>0?`Prepaid discount: -${money(order.discount)}<br>`:''}
     ${Number(order.shipping)>0?`Shipping shown: ${money(order.shipping)}<br>Shipping included: -${money(order.shipping_discount)}<br>`:'Shipping: FREE<br>'}
     <b>Final amount: ${money(order.total)}</b></p>
-    <p><b>Payment:</b> ${esc(order.payment_method)}<br><b>Status:</b> ${esc(friendly)}</p>
-    <p><a href="${store}/account.html" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:13px 18px;font-weight:700">VIEW MY ORDERS</a></p>
+    <p><b>Payment:</b> ${esc(order.payment_method)}<br><b>Status:</b> ${esc(friendly)}${order.invoice_number?`<br><b>Invoice:</b> ${esc(order.invoice_number)}`:''}</p>
+    ${order.invoice_number?'<p style="color:#555">Your invoice is available securely from My Orders.</p>':''}
+    <p><a href="${store}/account.html" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:13px 18px;font-weight:700">${order.invoice_number?'VIEW ORDER / INVOICE':'VIEW MY ORDERS'}</a></p>
     <p style="color:#777;font-size:12px;line-height:1.6;margin-top:26px">Keep this order reference for support. For damaged/torn/dirty-item claims, keep an unboxing video of the sealed parcel.</p>
   </div></body></html>`;
 }
@@ -566,9 +750,34 @@ export default {
 
       if(req.method==='GET' && url.pathname==='/api/account/orders'){
         let s; try{s=await requireCustomer(req,env)}catch{return json({error:'Unauthorized'},401,origin)}
-        const result=await env.DB.prepare(`SELECT id,payment_method,status,environment,subtotal,discount,shipping,shipping_discount,total,currency,coupon,created_at,updated_at,items_json FROM orders WHERE customer_email=? ORDER BY created_at DESC LIMIT 100`).bind(s.email).all();
-        const orders=(result.results||[]).map(r=>{const items=JSON.parse(r.items_json||'[]'); delete r.items_json; return {...r,items}});
+        const result=await env.DB.prepare(`SELECT id,payment_method,status,environment,subtotal,discount,shipping,shipping_discount,total,currency,coupon,created_at,updated_at,items_json,invoice_number,invoice_issued_at FROM orders WHERE customer_email=? ORDER BY created_at DESC LIMIT 100`).bind(s.email).all();
+        const orders=[];
+        for(const raw of (result.results||[])){
+          let r=raw;
+          if(!r.invoice_number && invoiceEligible(r) && invoiceConfigured(env)){
+            const issued=await ensureInvoice(env,r.id);
+            r={...r,invoice_number:issued.invoice_number,invoice_issued_at:issued.invoice_issued_at};
+          }
+          const items=JSON.parse(r.items_json||'[]'); delete r.items_json;
+          orders.push({...r,items,invoice_available:!!r.invoice_number});
+        }
         return json({orders,email:s.email},200,origin);
+      }
+
+      if(req.method==='GET' && (url.pathname==='/api/account/invoice' || url.pathname==='/api/account/invoice.pdf')){
+        let sess; try{sess=await requireCustomer(req,env)}catch{return json({error:'Unauthorized'},401,origin)}
+        await enforceRateLimit(env,`invoice-customer:${clientIp(req)}`,40,300);
+        const id=clean(url.searchParams.get('id'),100);
+        let order=await env.DB.prepare(`SELECT * FROM orders WHERE id=? AND customer_email=?`).bind(id,sess.email).first();
+        if(!order) return json({error:'Invoice not found'},404,origin);
+        order=await ensureInvoice(env,id);
+        if(!order.invoice_number) return json({error:'Invoice is available after payment/COD confirmation'},409,origin);
+        const inv=invoicePayload(order,env);
+        if(url.pathname.endsWith('.pdf')){
+          const bytes=invoicePdfBytes(inv);
+          return new Response(bytes,{status:200,headers:binaryHeaders(origin,'application/pdf',`${inv.invoice_number.replace(/[^A-Za-z0-9_-]/g,'-')}.pdf`)});
+        }
+        return json({invoice:inv},200,origin);
       }
 
       // ---------- Admin API ----------
@@ -583,7 +792,7 @@ export default {
           const search=clean(url.searchParams.get('q'),100);
           const limit=Math.min(200,Math.max(1,Number(url.searchParams.get('limit'))||100));
 
-          let sql=`SELECT id,payment_method,status,environment,subtotal,discount,shipping,shipping_discount,total,currency,coupon,owner_notified_at,customer_notified_at,customer_notified_status,created_at,updated_at,customer_json,items_json FROM orders`;
+          let sql=`SELECT id,payment_method,status,environment,subtotal,discount,shipping,shipping_discount,total,currency,coupon,owner_notified_at,customer_notified_at,customer_notified_status,invoice_number,invoice_issued_at,created_at,updated_at,customer_json,items_json FROM orders`;
           const clauses=[],binds=[];
           if(status && status!=='ALL'){ clauses.push('status=?'); binds.push(status); }
           if(search){
@@ -638,6 +847,18 @@ export default {
           const id=clean(body.id,100);
           const result=await notifyCustomer(env,id,true);
           return json({ok:true,result},200,origin);
+        }
+
+        if(req.method==='GET' && (url.pathname==='/api/admin/invoice' || url.pathname==='/api/admin/invoice.pdf')){
+          const id=clean(url.searchParams.get('id'),100);
+          let order=await ensureInvoice(env,id);
+          if(!order.invoice_number) return json({error:'Invoice is available after payment/COD confirmation'},409,origin);
+          const inv=invoicePayload(order,env);
+          if(url.pathname.endsWith('.pdf')){
+            const bytes=invoicePdfBytes(inv);
+            return new Response(bytes,{status:200,headers:binaryHeaders(origin,'application/pdf',`${inv.invoice_number.replace(/[^A-Za-z0-9_-]/g,'-')}.pdf`)});
+          }
+          return json({invoice:inv},200,origin);
         }
 
         return json({error:'Admin endpoint not found'},404,origin);

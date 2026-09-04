@@ -144,3 +144,17 @@ New protections:
 - Rojana Ek Ghanta remains available as a normal shop product.
 - Keeps customer accounts, My Orders, admin dashboard, Razorpay backend and order emails from v12.
 - ORDER_ENVIRONMENT remains TEST until the final live switch.
+
+
+## v14 — manual pricing baseline
+
+Current launch prices:
+- Rojana Ek Ghanta Oversized Tee: ₹899 / compare-at ₹1,299
+- Ghost Compass Oversized Tee: ₹899 / compare-at ₹1,299
+- Core 220 Oversized Tee: ₹749 / compare-at ₹999
+
+Future product pricing should be changed in each product's `product.json`, then rebuild with:
+
+`python scripts/build_products.py`
+
+See `PRICE-UPDATE-GUIDE.md`.

@@ -188,3 +188,12 @@ Added:
 - migration `0008_refund_ux_semantics.sql` repairs old partial refunds previously labelled as full refunds.
 
 See `V17_1-REFUND-UX.md`.
+
+
+## v17.2 — safe TEST-order cleanup
+
+Added manual cleanup scripts:
+- `cloudflare-worker/scripts/cleanup_test_orders_preview.sql`
+- `cloudflare-worker/scripts/cleanup_test_orders.sql`
+
+These are intentionally not migrations. See `TEST-ORDER-CLEANUP.md`.

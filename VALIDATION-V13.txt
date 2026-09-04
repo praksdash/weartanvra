@@ -1,0 +1,5 @@
+WEAR TANVRA v13 PRE-LIVE VALIDATION
+HTML pages checked: 15
+Products checked: 6
+JS files checked: 13
+Errors: 0

@@ -134,3 +134,13 @@ New protections:
 - Admin resend customer email
 - TEST/LIVE Razorpay mismatch guard
 - Live Worker URL retained
+
+
+## v13 — pre-live storefront cleanup
+
+- Removed the Rojana Ek Ghanta campaign from the homepage hero.
+- Fixed the homepage broken image reference.
+- Homepage now uses the existing Core 220 black tee image.
+- Rojana Ek Ghanta remains available as a normal shop product.
+- Keeps customer accounts, My Orders, admin dashboard, Razorpay backend and order emails from v12.
+- ORDER_ENVIRONMENT remains TEST until the final live switch.

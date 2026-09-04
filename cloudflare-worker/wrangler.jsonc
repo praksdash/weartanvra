@@ -1,14 +1,30 @@
 {
-  "$schema":"node_modules/wrangler/config-schema.json",
-  "name":"weartanvra-payments",
-  "main":"src/index.js",
-  "compatibility_date":"2026-09-01",
-  "vars":{
-    "ALLOWED_ORIGINS":"https://weartanvra.com,https://www.weartanvra.com",
-    "PREPAID_DISCOUNT":"50","FREE_SHIPPING_ABOVE": "799",
-    "PREPAID_SHIPPING_BELOW_THRESHOLD": "68","COD_MINIMUM_BELOW_THRESHOLD": "98","COD_PERCENT_BELOW_THRESHOLD": "2.3",
-    "OWNER_EMAIL": "YOUR_ORDER_NOTIFICATION_EMAIL",
-    "FROM_EMAIL": "WEAR TANVRA <orders@YOUR_VERIFIED_DOMAIN>"
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "weartanvra-payments",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+
+  "vars": {
+    "ALLOWED_ORIGINS": "https://weartanvra.com,https://www.weartanvra.com",
+
+    "PREPAID_DISCOUNT": "50",
+    "FREE_SHIPPING_ABOVE": "799",
+
+    "PREPAID_SHIPPING_BELOW_THRESHOLD": "68",
+    "COD_MINIMUM_BELOW_THRESHOLD": "98",
+    "COD_PERCENT_BELOW_THRESHOLD": "2.3",
+
+    "ORDER_ENVIRONMENT": "TEST",
+
+    "OWNER_EMAIL": "weartanvra@gmail.com",
+    "FROM_EMAIL": "WEAR TANVRA <orders@weartanvra.com>"
   },
-  "d1_databases":[{"binding":"DB","database_name":"weartanvra-orders","database_id":"4529f8e8-38d7-4506-b909-14ed5afa00fd"}]
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "weartanvra-orders",
+      "database_id": "4529f8e8-38d7-4506-b909-14ed5afa00fd"
+    }
+  ]
 }

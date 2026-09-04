@@ -108,3 +108,18 @@ New:
 See:
 - `ORDER-MANAGEMENT.md`
 - `cloudflare-worker/README.md`
+
+
+## v11 — order integrity
+
+This release fixes the prepaid/COD status mixing seen in the admin dashboard.
+
+New protections:
+- prepaid orders cannot be assigned COD statuses,
+- COD orders cannot be assigned prepaid payment statuses,
+- old mismatched test orders are repaired by migration,
+- TEST/LIVE environment is stored per order,
+- dashboard filters: ALL / TEST / COD PENDING / PREPAID PENDING / PAID,
+- payment-method-specific status dropdowns,
+- red integrity warning if a mismatched legacy record somehow appears,
+- live Worker URL is already configured in `assets/config.js`.

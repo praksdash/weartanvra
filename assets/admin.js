@@ -1,6 +1,6 @@
 (()=>{
 const $=s=>document.querySelector(s);
-const state={orders:[],token:sessionStorage.getItem('tanvraAdminToken')||''};
+const state={orders:[],allOrders:[],quickFilter:'ALL',token:sessionStorage.getItem('tanvraAdminToken')||''};
 
 const productMap=Object.fromEntries((window.TANVRA_PRODUCTS||[]).map(p=>[p.id,p]));
 const money=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(n)||0);
@@ -56,18 +56,23 @@ function productName(id){
 function renderStats(){
   const counts={};
   state.orders.forEach(o=>counts[o.status]=(counts[o.status]||0)+1);
-  const revenue=state.orders.filter(o=>o.status==='PAID'||o.status==='DELIVERED')
-    .reduce((s,o)=>s+Number(o.total||0),0);
-  $('[data-stats]').innerHTML=[
-    ['Orders',state.orders.length],
-    ['COD pending',counts.COD_CONFIRMATION_REQUIRED||0],
-    ['Paid',counts.PAID||0],
-    ['Sent to T-Adda',counts.SENT_TO_TADDA||0],
-    ['Delivered',counts.DELIVERED||0],
-    ['Paid/Delivered value',money(revenue)]
-  ].map(([k,v])=>`<div class="admin-stat"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('');
-}
+  const testOrders=state.orders.filter(o=>String(o.environment||'TEST').toUpperCase()==='TEST').length;
+  const codPending=state.orders.filter(o=>o.payment_method==='Cash on Delivery'&&o.status==='COD_CONFIRMATION_REQUIRED').length;
+  const prepaidPending=state.orders.filter(o=>o.payment_method==='Prepaid'&&['PENDING_PAYMENT','AUTHORIZED'].includes(o.status)).length;
+  const paid=state.orders.filter(o=>o.payment_method==='Prepaid'&&o.status==='PAID').length;
+  const sent=state.orders.filter(o=>o.status==='SENT_TO_TADDA').length;
+  const delivered=state.orders.filter(o=>o.status==='DELIVERED').length;
 
+  $('[data-stats]').innerHTML=[
+    ['Orders',state.orders.length,''],
+    ['TEST orders',testOrders,'test'],
+    ['COD pending',codPending,'pending'],
+    ['Prepaid pending',prepaidPending,'pending'],
+    ['Paid',paid,'good'],
+    ['Sent to T-Adda',sent,''],
+    ['Delivered',delivered,'good']
+  ].map(([k,v,c])=>`<div class="admin-stat ${c}"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('');
+}
 function statusClass(status){
   if(status==='PAID'||status==='DELIVERED'||status==='COD_CONFIRMED') return 'good';
   if(status==='CANCELLED'||status==='PAYMENT_FAILED') return 'bad';
@@ -84,14 +89,20 @@ function renderOrders(){
   root.innerHTML=state.orders.map(o=>{
     const c=o.customer||{},items=o.items||[];
     const itemText=items.map(i=>`${productName(i.product_id)} × ${i.qty}`).join(', ');
-    return `<article class="admin-order-card" data-order-id="${esc(o.id)}">
+    const mismatch=(o.payment_method==='Prepaid'&&o.status.startsWith('COD_'))||
+      (o.payment_method==='Cash on Delivery'&&['PENDING_PAYMENT','AUTHORIZED','PAID'].includes(o.status));
+    return `<article class="admin-order-card ${mismatch?'integrity-error':''}" data-order-id="${esc(o.id)}">
       <div class="admin-order-top">
         <div>
           <strong class="admin-order-id">${esc(o.id)}</strong>
           <span>${esc(fmt(o.created_at))}</span>
         </div>
-        <span class="status-pill ${statusClass(o.status)}">${esc(o.status)}</span>
+        <div class="admin-badges">
+          <span class="environment-pill ${String(o.environment||'TEST').toLowerCase()}">${esc(o.environment||'TEST')}</span>
+          <span class="status-pill ${statusClass(o.status)}">${esc(o.status)}</span>
+        </div>
       </div>
+      ${mismatch?'<div class="integrity-warning">STATUS INTEGRITY ERROR — do not fulfil this order until repaired.</div>':''}
       <div class="admin-order-grid">
         <div><small>CUSTOMER</small><strong>${esc(c.name||'')}</strong><span>${esc(c.phone||'')}</span></div>
         <div><small>ITEMS</small><strong>${esc(itemText)}</strong></div>
@@ -105,6 +116,21 @@ function renderOrders(){
   root.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>openOrder(b.dataset.view));
 }
 
+
+function applyQuickFilter(){
+  const q=state.quickFilter;
+  state.orders=state.allOrders.filter(o=>{
+    if(q==='ALL') return true;
+    if(q==='TEST') return String(o.environment||'TEST').toUpperCase()==='TEST';
+    if(q==='COD_PENDING') return o.payment_method==='Cash on Delivery'&&o.status==='COD_CONFIRMATION_REQUIRED';
+    if(q==='PREPAID_PENDING') return o.payment_method==='Prepaid'&&['PENDING_PAYMENT','AUTHORIZED'].includes(o.status);
+    if(q==='PAID') return o.payment_method==='Prepaid'&&o.status==='PAID';
+    return true;
+  });
+  renderStats();
+  renderOrders();
+}
+
 async function load(){
   try{
     const status=$('[data-status-filter]').value||'ALL';
@@ -112,8 +138,8 @@ async function load(){
     const p=new URLSearchParams({status,limit:'150'});
     if(q) p.set('q',q);
     const d=await api('/api/admin/orders?'+p);
-    state.orders=d.orders||[];
-    renderStats(); renderOrders();
+    state.allOrders=d.orders||[];
+    applyQuickFilter();
   }catch(e){ showMessage(e.message,'error'); }
 }
 
@@ -123,7 +149,7 @@ async function openOrder(id){
     const c=o.customer||{},items=o.items||[],events=o.events||[];
     $('[data-order-detail]').innerHTML=`
       <div class="admin-detail-head">
-        <div><p class="eyebrow">ORDER</p><h2>${esc(o.id)}</h2><p>${esc(fmt(o.created_at))}</p></div>
+        <div><p class="eyebrow">ORDER • ${esc(o.environment||'TEST')}</p><h2>${esc(o.id)}</h2><p>${esc(fmt(o.created_at))}</p></div>
         <span class="status-pill ${statusClass(o.status)}">${esc(o.status)}</span>
       </div>
 
@@ -161,10 +187,11 @@ async function openOrder(id){
         <h3>Update status</h3>
         <div class="admin-update-row">
           <select data-new-status>
-            ${[
-              'COD_CONFIRMATION_REQUIRED','COD_CONFIRMED','PAID','AUTHORIZED',
-              'SENT_TO_TADDA','PRINTING','DISPATCHED','DELIVERED','CANCELLED','PAYMENT_FAILED'
-            ].map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}
+            ${(
+              o.payment_method==='Cash on Delivery'
+                ? ['COD_CONFIRMATION_REQUIRED','COD_CONFIRMED','SENT_TO_TADDA','PRINTING','DISPATCHED','DELIVERED','CANCELLED']
+                : ['PENDING_PAYMENT','AUTHORIZED','PAID','SENT_TO_TADDA','PRINTING','DISPATCHED','DELIVERED','CANCELLED','PAYMENT_FAILED']
+            ).map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}
           </select>
           <input data-admin-note placeholder="Optional note" value="${esc(o.admin_note||'')}">
           <button class="btn dark" type="button" data-save-status>SAVE STATUS</button>
@@ -220,6 +247,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('[data-logout]').onclick=lock;
   $('[data-refresh]').onclick=load;
   $('[data-status-filter]').onchange=load;
+
+  document.querySelectorAll('[data-quick-filter]').forEach(btn=>{
+    btn.onclick=()=>{
+      document.querySelectorAll('[data-quick-filter]').forEach(x=>x.classList.remove('active'));
+      btn.classList.add('active');
+      state.quickFilter=btn.dataset.quickFilter;
+      applyQuickFilter();
+    };
+  });
 
   let timer;
   $('[data-search]').oninput=()=>{

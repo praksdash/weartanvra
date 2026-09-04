@@ -83,3 +83,20 @@
   .admin-order-grid{grid-template-columns:1fr}
   .admin-event{grid-template-columns:1fr}
 }
+
+/* v11 order integrity / environment */
+.admin-stats{grid-template-columns:repeat(7,1fr)}
+.admin-stat.test{background:#eef3ff;border-color:#bdc9eb}
+.admin-stat.pending{background:#fffaf0;border-color:#ecd9a5}
+.admin-stat.good{background:#eef9f1;border-color:#b9dec2}
+.admin-quick-filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.admin-filter{border:1px solid #bbb;background:#fff;padding:10px 14px;font-weight:800;font-size:11px;cursor:pointer}
+.admin-filter.active{background:#111;color:#fff;border-color:#111}
+.admin-badges{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.environment-pill{display:inline-flex;padding:7px 9px;font-size:10px;font-weight:900;letter-spacing:.08em;border:1px solid #bbb}
+.environment-pill.test{background:#eef3ff;color:#254d9a;border-color:#bdc9eb}
+.environment-pill.live{background:#e8f7ed;color:#146b30;border-color:#b9dec2}
+.integrity-error{border:2px solid #c62828}
+.integrity-warning{margin:12px 0 0;padding:10px 12px;background:#fff0f0;color:#9a1f1f;font-size:11px;font-weight:900}
+@media(max-width:1000px){.admin-stats{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:600px){.admin-stats{grid-template-columns:1fr 1fr}}

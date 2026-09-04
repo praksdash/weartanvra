@@ -4,6 +4,7 @@ const SIZES = new Set(['S','M','L','XL']);
 const ADMIN_STATUSES = new Set([
   'COD_CONFIRMATION_REQUIRED',
   'COD_CONFIRMED',
+  'PENDING_PAYMENT',
   'PAID',
   'AUTHORIZED',
   'SENT_TO_TADDA',
@@ -13,6 +14,22 @@ const ADMIN_STATUSES = new Set([
   'CANCELLED',
   'PAYMENT_FAILED'
 ]);
+
+const COD_ONLY_STATUSES = new Set(['COD_CONFIRMATION_REQUIRED','COD_CONFIRMED']);
+const PREPAID_ONLY_STATUSES = new Set(['PENDING_PAYMENT','AUTHORIZED','PAID']);
+
+function orderEnvironment(env){
+  return String(env.ORDER_ENVIRONMENT||'TEST').toUpperCase()==='LIVE' ? 'LIVE' : 'TEST';
+}
+
+function assertStatusAllowed(paymentMethod,status){
+  if(paymentMethod==='Prepaid' && COD_ONLY_STATUSES.has(status)){
+    throw Error('Invalid order state: prepaid orders cannot use a COD status');
+  }
+  if(paymentMethod==='Cash on Delivery' && PREPAID_ONLY_STATUSES.has(status)){
+    throw Error('Invalid order state: COD orders cannot use a prepaid payment status');
+  }
+}
 
 const now = () => new Date().toISOString();
 const clean = (v,n=300) => String(v ?? '').trim().slice(0,n);
@@ -129,22 +146,29 @@ async function event(env,orderId,eventType,status=null,note=null){
 }
 
 async function insertOrder(env,id,method,status,customer,items,p,coupon){
-  const t=now();
+  assertStatusAllowed(method,status);
+  const t=now(),environment=orderEnvironment(env);
   await env.DB.prepare(
     `INSERT INTO orders(
       id,payment_method,status,customer_json,items_json,
       subtotal,discount,shipping,shipping_discount,total,currency,coupon,
-      created_at,updated_at
-    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+      environment,created_at,updated_at
+    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).bind(
     id,method,status,JSON.stringify(customer),JSON.stringify(items),
     p.subtotal,p.discount,p.shipping,p.shippingIncludedDiscount,p.total,'INR',coupon||null,
-    t,t
+    environment,t,t
   ).run();
-  await event(env,id,'ORDER_CREATED',status);
+  await event(env,id,'ORDER_CREATED',status,environment);
 }
 
 async function updateStatus(env,id,status,paymentId=null,note=null){
+  const current=await env.DB.prepare(
+    `SELECT payment_method FROM orders WHERE id=?`
+  ).bind(id).first();
+  if(!current) throw Error('Order not found');
+  assertStatusAllowed(current.payment_method,status);
+
   await env.DB.prepare(
     `UPDATE orders
      SET status=?,razorpay_payment_id=COALESCE(?,razorpay_payment_id),
@@ -297,7 +321,7 @@ export default {
       if(req.method==='GET' && url.pathname==='/api/order-status'){
         const id=clean(url.searchParams.get('id'),100);
         const row=await env.DB.prepare(
-          `SELECT id,status,payment_method,total,currency,updated_at FROM orders WHERE id=?`
+          `SELECT id,status,payment_method,total,currency,environment,updated_at FROM orders WHERE id=?`
         ).bind(id).first();
         return row ? json(row,200,origin) : json({error:'Order not found'},404,origin);
       }
@@ -312,7 +336,7 @@ export default {
           const search=clean(url.searchParams.get('q'),100);
           const limit=Math.min(200,Math.max(1,Number(url.searchParams.get('limit'))||100));
 
-          let sql=`SELECT id,payment_method,status,subtotal,discount,shipping,shipping_discount,total,currency,coupon,owner_notified_at,created_at,updated_at,customer_json,items_json FROM orders`;
+          let sql=`SELECT id,payment_method,status,environment,subtotal,discount,shipping,shipping_discount,total,currency,coupon,owner_notified_at,created_at,updated_at,customer_json,items_json FROM orders`;
           const clauses=[],binds=[];
           if(status && status!=='ALL'){ clauses.push('status=?'); binds.push(status); }
           if(search){
@@ -345,8 +369,9 @@ export default {
           const status=clean(body.status,60);
           const note=clean(body.note,500);
           if(!ADMIN_STATUSES.has(status)) throw Error('Invalid status');
-          const exists=await env.DB.prepare(`SELECT id FROM orders WHERE id=?`).bind(id).first();
+          const exists=await env.DB.prepare(`SELECT id,payment_method FROM orders WHERE id=?`).bind(id).first();
           if(!exists) return json({error:'Order not found'},404,origin);
+          assertStatusAllowed(exists.payment_method,status);
           await updateStatus(env,id,status,null,note||null);
           return json({ok:true,order:await adminOrder(env,id)},200,origin);
         }

@@ -34,6 +34,14 @@
   <main data-dashboard hidden>
     <section class="admin-stats" data-stats></section>
 
+    <section class="admin-quick-filters">
+      <button type="button" class="admin-filter active" data-quick-filter="ALL">ALL</button>
+      <button type="button" class="admin-filter" data-quick-filter="TEST">TEST</button>
+      <button type="button" class="admin-filter" data-quick-filter="COD_PENDING">COD PENDING</button>
+      <button type="button" class="admin-filter" data-quick-filter="PREPAID_PENDING">PREPAID PENDING</button>
+      <button type="button" class="admin-filter" data-quick-filter="PAID">PAID</button>
+    </section>
+
     <section class="admin-controls">
       <input type="search" placeholder="Search order, name, phone, product…" data-search>
       <select data-status-filter>

@@ -1,13 +1,13 @@
 {
   "name": "Wild Instinct Oversized Tee",
   "price": 579,
-  "compareAt": 899,
+  "compareAt": 799,
   "badge": "DROP 01",
   "fit": "Oversized",
   "gsm": "220 GSM",
   "material": "100% Cotton",
   "print": "Front graphic",
-  "description": "A bold graphic oversized tee on our 220 GSM cotton base. Built for a clean streetwear silhouette with a structured drape.",
+  "description": "Some things should not be overthought. A clean front-focused streetwear piece built for effortless daily rotation on our 220 GSM oversized base.",
   "sizes": [
     "S",
     "M",
@@ -30,5 +30,7 @@
       "hex": "#321d14",
       "image": "front-brown.webp"
     }
-  ]
+  ],
+  "collection": "GRAPHIC DROP",
+  "printTier": "A4"
 }

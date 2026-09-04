@@ -1,6 +1,6 @@
 {
   "name": "Rojana Ek Ghanta Oversized Tee",
-  "price": 579,
+  "price": 599,
   "compareAt": 899,
   "badge": "ODISHA EDITION",
   "fit": "Oversized",
@@ -9,7 +9,7 @@
   "print": "Front + back graphic",
   "featured": true,
   "sort": 1,
-  "description": "Rojana Ek Ghanta — an Odisha-inspired one-hour-a-day movement tee. Small campaign artwork on the front and a larger statement graphic on the back. Website images are T-shirt mockups; transparent print-ready artwork remains inside print-ready/ for production.",
+  "description": "One hour. Every day. An Odisha-inspired edition celebrating consistency, movement and personal progress, built on our heavyweight 220 GSM oversized silhouette.",
   "sizes": [
     "S",
     "M",
@@ -27,5 +27,7 @@
       "hex": "#f4f4f4",
       "image": "front-white-tee.webp"
     }
-  ]
+  ],
+  "collection": "ROJANA EK GHANTA",
+  "printTier": "A3"
 }

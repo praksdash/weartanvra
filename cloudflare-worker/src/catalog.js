@@ -1,1 +1,1 @@
-export const PRODUCTS={"oversized-rojana-ek-ghanta":579,"oversized-core-220":469,"oversized-ghost-compass":579,"oversized-not-fast-just-furious":579,"oversized-unleash-the-beast":579,"oversized-wild-instinct":579};
+export const PRODUCTS={"oversized-rojana-ek-ghanta":599,"oversized-core-220":479,"oversized-ghost-compass":649,"oversized-not-fast-just-furious":599,"oversized-unleash-the-beast":649,"oversized-wild-instinct":579};

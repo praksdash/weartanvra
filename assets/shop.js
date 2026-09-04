@@ -10,10 +10,10 @@ document.addEventListener('DOMContentLoaded',()=>{
      const pct=salePct(p),free=p.price>=Number(TANVRA_CONFIG.shipping?.freeAbove||799);
      return `<article class="product-card" data-card="${esc(p.id)}">
        <a class="product-card-link" href="product.html?id=${encodeURIComponent(p.id)}">
-         <div class="product-image"><span class="card-badge">${esc(p.badge)}</span>${pct?`<span class="sale-badge">${pct}% OFF</span>`:''}<img src="${esc(p.images[0])}" alt="${esc(p.name)}" loading="lazy" decoding="async"></div>
-         <div class="product-meta"><h3>${esc(p.name)}</h3><p>${esc(p.subtitle)}</p><div class="price"><strong>${TanvraStore.money(p.price)}</strong>${p.compareAt>p.price?`<s>${TanvraStore.money(p.compareAt)}</s>`:''}</div>${free?'<div class="free-ship">FREE SHIPPING</div>':''}</div>
+         <div class="product-image"><span class="card-badge">${esc(p.badge)}</span><img src="${esc(p.images[0])}" alt="${esc(p.name)}" loading="lazy" decoding="async"></div>
+         <div class="product-meta"><h3>${esc(p.name)}</h3><p>${esc(p.subtitle)}</p><div class="price"><strong>${TanvraStore.money(p.price)}</strong>${p.compareAt>p.price?`<s>${TanvraStore.money(p.compareAt)}</s>`:''}</div></div>
        </a>
-       <div class="card-actions"><button class="btn card-add" data-add="${esc(p.id)}">ADD TO BAG</button><button class="btn dark card-buy" data-buy="${esc(p.id)}">CHECKOUT</button></div>
+       <div class="card-actions"><button class="btn card-add" data-add="${esc(p.id)}">ADD TO BAG</button></div>
      </article>`
    }).join('');
    empty.hidden=ps.length>0;

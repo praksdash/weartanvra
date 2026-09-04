@@ -7,8 +7,8 @@ OUT_JSON=ROOT/'assets'/'generated-products.json'
 WORKER_CATALOG=ROOT/'cloudflare-worker'/'src'/'catalog.js'
 IMAGE_EXTS={'.jpg','.jpeg','.png','.webp'}
 DEFAULTS={
- 'oversized':{'price':899,'compareAt':1299,'badge':'NEW','fit':'Oversized','gsm':'220 GSM','material':'100% Cotton','sizes':['S','M','L','XL']},
- 'regular':{'price':699,'compareAt':999,'badge':'NEW','fit':'Regular','gsm':'180 GSM','material':'100% Cotton','sizes':['S','M','L','XL']}
+ 'oversized':{'price':479,'compareAt':699,'badge':'NEW','fit':'Oversized','gsm':'220 GSM','material':'100% Cotton','sizes':['S','M','L','XL']},
+ 'regular':{'price':399,'compareAt':599,'badge':'NEW','fit':'Regular','gsm':'180 GSM','material':'100% Cotton','sizes':['S','M','L','XL']}
 }
 
 def title(slug): return ' '.join(w.capitalize() for w in re.split(r'[-_]+',slug) if w)
@@ -53,7 +53,7 @@ def build():
     'material':meta.get('material',d['material']),'print':meta.get('print','Graphic print'),
     'description':meta.get('description') or f"{title(slug)} from WEAR TANVRA.",
     'sizes':meta.get('sizes',d['sizes']),'colors':norm,'images':paths,
-    'featured':bool(meta.get('featured',False)),'sort':int(meta.get('sort',100))
+    'featured':bool(meta.get('featured',False)),'sort':int(meta.get('sort',100)),'collection':meta.get('collection','GRAPHIC DROP' if cat=='oversized' else 'ESSENTIALS'),'printTier':meta.get('printTier','GRAPHIC')
    }
    products.append(prod)
  products.sort(key=lambda p:(p['sort'],p['name'].lower()))

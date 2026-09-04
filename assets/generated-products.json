@@ -5,14 +5,14 @@
     "category": "oversized",
     "name": "Rojana Ek Ghanta Oversized Tee",
     "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
-    "price": 579,
+    "price": 599,
     "compareAt": 899,
     "badge": "ODISHA EDITION",
     "fit": "Oversized",
     "gsm": "220 GSM",
     "material": "100% Cotton",
     "print": "Front + back graphic",
-    "description": "Rojana Ek Ghanta — an Odisha-inspired one-hour-a-day movement tee. Small campaign artwork on the front and a larger statement graphic on the back. Website images are T-shirt mockups; transparent print-ready artwork remains inside print-ready/ for production.",
+    "description": "One hour. Every day. An Odisha-inspired edition celebrating consistency, movement and personal progress, built on our heavyweight 220 GSM oversized silhouette.",
     "sizes": [
       "S",
       "M",
@@ -38,7 +38,9 @@
       "products/oversized/rojana-ek-ghanta/back-white-tee.webp"
     ],
     "featured": true,
-    "sort": 1
+    "sort": 1,
+    "collection": "ROJANA EK GHANTA",
+    "printTier": "A3"
   },
   {
     "id": "oversized-core-220",
@@ -46,14 +48,14 @@
     "category": "oversized",
     "name": "Core 220 Oversized Tee",
     "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
-    "price": 469,
-    "compareAt": 749,
+    "price": 479,
+    "compareAt": 699,
     "badge": "CORE",
     "fit": "Oversized",
     "gsm": "220 GSM",
     "material": "100% Cotton",
     "print": "Minimal / no large graphic",
-    "description": "The clean base silhouette: heavyweight 220 GSM cotton, oversized proportions and a simple everyday streetwear finish.",
+    "description": "Built around the silhouette that defines modern streetwear. Heavyweight 220 GSM cotton with a relaxed oversized shape, soft hand-feel and everyday durability. Minimal by design, so the fit does the talking.",
     "sizes": [
       "S",
       "M",
@@ -89,7 +91,9 @@
       "products/oversized/core-220/front-white.webp"
     ],
     "featured": false,
-    "sort": 100
+    "sort": 100,
+    "collection": "ESSENTIALS",
+    "printTier": "PLAIN"
   },
   {
     "id": "oversized-ghost-compass",
@@ -97,14 +101,14 @@
     "category": "oversized",
     "name": "Ghost Compass Oversized Tee",
     "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
-    "price": 579,
+    "price": 649,
     "compareAt": 899,
     "badge": "DROP 01",
     "fit": "Oversized",
     "gsm": "220 GSM",
     "material": "100% Cotton",
     "print": "Back graphic",
-    "description": "A statement back-print tee on our heavyweight oversized cotton base. The front stays clean while the graphic carries the look from behind.",
+    "description": "Direction is not always obvious. A statement back graphic built around instinct, exploration and choosing your own route, printed on heavyweight cotton with an oversized streetwear silhouette.",
     "sizes": [
       "S",
       "M",
@@ -140,7 +144,9 @@
       "products/oversized/ghost-compass/back-white.webp"
     ],
     "featured": false,
-    "sort": 100
+    "sort": 100,
+    "collection": "GRAPHIC DROP",
+    "printTier": "A2"
   },
   {
     "id": "oversized-not-fast-just-furious",
@@ -148,14 +154,14 @@
     "category": "oversized",
     "name": "Not Fast Just Furious Oversized Tee",
     "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
-    "price": 579,
+    "price": 599,
     "compareAt": 899,
     "badge": "DROP 01",
     "fit": "Oversized",
     "gsm": "220 GSM",
     "material": "100% Cotton",
     "print": "Graphic print",
-    "description": "Playful graphic oversized tee shown across multiple sample/mockup views.",
+    "description": "A playful statement graphic with a relaxed heavyweight silhouette—built for everyday rotation without blending into the background.",
     "sizes": [
       "S",
       "M",
@@ -184,7 +190,9 @@
       "products/oversized/not-fast-just-furious/image-12.jpg"
     ],
     "featured": false,
-    "sort": 100
+    "sort": 100,
+    "collection": "GRAPHIC DROP",
+    "printTier": "A3"
   },
   {
     "id": "oversized-unleash-the-beast",
@@ -192,14 +200,14 @@
     "category": "oversized",
     "name": "Unleash The Beast Oversized Tee",
     "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
-    "price": 579,
+    "price": 649,
     "compareAt": 899,
     "badge": "DROP 01",
     "fit": "Oversized",
     "gsm": "220 GSM",
     "material": "100% Cotton",
-    "print": "Graphic print",
-    "description": "Bold statement graphic tee shown across multiple sample/mockup views.",
+    "print": "Large back graphic",
+    "description": "Controlled energy. Unfiltered expression. A bold oversized graphic tee designed around strength, motion and presence.",
     "sizes": [
       "S",
       "M",
@@ -228,7 +236,9 @@
       "products/oversized/unleash-the-beast/image-12.jpg"
     ],
     "featured": false,
-    "sort": 100
+    "sort": 100,
+    "collection": "GRAPHIC DROP",
+    "printTier": "A2"
   },
   {
     "id": "oversized-wild-instinct",
@@ -237,13 +247,13 @@
     "name": "Wild Instinct Oversized Tee",
     "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
     "price": 579,
-    "compareAt": 899,
+    "compareAt": 799,
     "badge": "DROP 01",
     "fit": "Oversized",
     "gsm": "220 GSM",
     "material": "100% Cotton",
     "print": "Front graphic",
-    "description": "A bold graphic oversized tee on our 220 GSM cotton base. Built for a clean streetwear silhouette with a structured drape.",
+    "description": "Some things should not be overthought. A clean front-focused streetwear piece built for effortless daily rotation on our 220 GSM oversized base.",
     "sizes": [
       "S",
       "M",
@@ -274,6 +284,8 @@
       "products/oversized/wild-instinct/detail-green.webp"
     ],
     "featured": false,
-    "sort": 100
+    "sort": 100,
+    "collection": "GRAPHIC DROP",
+    "printTier": "A4"
   }
 ]

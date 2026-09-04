@@ -38,6 +38,12 @@ async function downloadAdminInvoice(id){
   document.body.appendChild(a);a.click();const u=a.href;a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);
 }
 
+async function openAdminEvidence(id){
+  const r=await fetch(backend()+'/api/admin/returns/evidence?id='+encodeURIComponent(id),{headers:{Authorization:'Bearer '+state.token}});
+  if(!r.ok){const d=await r.json().catch(()=>({}));throw Error(d.error||'Could not open evidence')}
+  const blob=await r.blob(),u=URL.createObjectURL(blob);window.open(u,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(u),60000);
+}
+function returnStatusLabel(s){return ({RETURN_REQUESTED:'Return requested',UNDER_REVIEW:'Under review',APPROVED:'Approved',REJECTED:'Rejected',REFUND_PENDING:'Refund pending',REFUNDED:'Refunded',REPLACEMENT_PROCESSING:'Replacement processing',REPLACEMENT_DISPATCHED:'Replacement dispatched',COMPLETED:'Completed'})[s]||s}
 function showMessage(text,type='ok'){
   const box=$('[data-message]');
   box.hidden=false; box.textContent=text; box.dataset.type=type;
@@ -72,6 +78,7 @@ function renderStats(){
   const paid=state.orders.filter(o=>o.payment_method==='Prepaid'&&o.status==='PAID').length;
   const sent=state.orders.filter(o=>o.status==='SENT_TO_TADDA').length;
   const delivered=state.orders.filter(o=>o.status==='DELIVERED').length;
+  const returns=state.orders.filter(o=>o.return_status).length;
 
   $('[data-stats]').innerHTML=[
     ['Orders',state.orders.length,''],
@@ -80,7 +87,8 @@ function renderStats(){
     ['Prepaid pending',prepaidPending,'pending'],
     ['Paid',paid,'good'],
     ['Sent to T-Adda',sent,''],
-    ['Delivered',delivered,'good']
+    ['Delivered',delivered,'good'],
+    ['Returns',returns,'pending']
   ].map(([k,v,c])=>`<div class="admin-stat ${c}"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('');
 }
 function statusClass(status){
@@ -110,6 +118,7 @@ function renderOrders(){
         <div class="admin-badges">
           <span class="environment-pill ${String(o.environment||'TEST').toLowerCase()}">${esc(o.environment||'TEST')}</span>
           <span class="status-pill ${statusClass(o.status)}">${esc(o.status)}</span>
+          ${o.return_status?`<span class="status-pill pending">${esc(returnStatusLabel(o.return_status))}</span>`:''}
         </div>
       </div>
       ${mismatch?'<div class="integrity-warning">STATUS INTEGRITY ERROR — do not fulfil this order until repaired.</div>':''}
@@ -210,6 +219,20 @@ async function openOrder(id){
         <button class="btn" type="button" data-resend-email>RESEND OWNER EMAIL</button><button class="btn" type="button" data-resend-customer-email>RESEND CUSTOMER EMAIL</button>
       </section>
 
+      ${o.return_request?`<section class="admin-return-box">
+        <h3>Return / Refund</h3>
+        <p><b>${esc(o.return_request.id)}</b> • ${esc(returnStatusLabel(o.return_request.status))}<br>Reason: ${esc(o.return_request.reason)} • Preference: ${esc(o.return_request.preference)}<br>${esc(o.return_request.description||'')}</p>
+        <div class="return-evidence-admin">${(o.return_request.evidence||[]).map(e=>`<button class="btn" type="button" data-admin-evidence="${esc(e.id)}">VIEW ${esc(e.file_name)}</button>`).join('')||'<span class="micro">No evidence uploaded yet.</span>'}</div>
+        <div class="admin-update-row">
+          <select data-return-status>${['RETURN_REQUESTED','UNDER_REVIEW','APPROVED','REJECTED','REFUND_PENDING','REPLACEMENT_PROCESSING','REPLACEMENT_DISPATCHED','COMPLETED'].map(s=>`<option ${s===o.return_request.status?'selected':''}>${s}</option>`).join('')}</select>
+          <input data-return-customer-message placeholder="Message shown to customer" value="${esc(o.return_request.customer_message||'')}">
+          <input data-return-tracking placeholder="Replacement tracking (optional)" value="${esc(o.return_request.replacement_tracking||'')}">
+          <button class="btn dark" type="button" data-save-return>SAVE RETURN</button>
+        </div>
+        ${o.payment_method==='Prepaid'&&['APPROVED','REFUND_PENDING'].includes(o.return_request.status)&&!o.return_request.razorpay_refund_id?`<div class="admin-update-row"><input type="number" min="1" max="${esc(o.total)}" step="1" data-refund-amount value="${esc(o.total)}"><button class="btn dark" type="button" data-refund>REFUND VIA RAZORPAY</button></div>`:''}
+        ${o.return_request.refund_amount?`<p><b>Refund:</b> ${money(o.return_request.refund_amount)} • ${esc(o.return_request.refund_status||o.return_request.status)}${o.return_request.razorpay_refund_id?` • ${esc(o.return_request.razorpay_refund_id)}`:''}</p>`:''}
+      </section>`:''}
+
       <section>
         <h3>Timeline</h3>
         <div class="admin-events">
@@ -233,6 +256,12 @@ async function openOrder(id){
       await load();
       await openOrder(o.id);
     };
+
+    document.querySelectorAll('[data-admin-evidence]').forEach(btn=>btn.onclick=async()=>{try{await openAdminEvidence(btn.dataset.adminEvidence)}catch(e){showMessage(e.message,'error')}});
+    const saveReturn=$('[data-save-return]');
+    if(saveReturn) saveReturn.onclick=async()=>{saveReturn.disabled=true;try{await api('/api/admin/return-status',{method:'POST',body:JSON.stringify({id:o.return_request.id,status:$('[data-return-status]').value,customer_message:$('[data-return-customer-message]').value.trim(),replacement_tracking:$('[data-return-tracking]').value.trim()})});showMessage('Return status updated.');await load();await openOrder(o.id)}catch(e){showMessage(e.message,'error')}finally{saveReturn.disabled=false}};
+    const refundBtn=$('[data-refund]');
+    if(refundBtn) refundBtn.onclick=async()=>{const amount=Number($('[data-refund-amount]').value);if(!confirm(`Refund ${money(amount)} to this customer via Razorpay? This action sends real money.`))return;refundBtn.disabled=true;try{await api('/api/admin/refund',{method:'POST',body:JSON.stringify({return_id:o.return_request.id,amount})});showMessage('Razorpay refund started.');await load();await openOrder(o.id)}catch(e){showMessage(e.message,'error')}finally{refundBtn.disabled=false}};
 
     const invoiceBtn=$('[data-download-admin-invoice]');
     if(invoiceBtn) invoiceBtn.onclick=async()=>{

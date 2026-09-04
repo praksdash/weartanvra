@@ -106,3 +106,6 @@
 
 /* v16 customer invoice */
 .account-invoice-row{margin-top:16px;padding-top:16px;border-top:1px solid #e6e6e6;display:flex;align-items:center;justify-content:space-between;gap:16px}.account-invoice-row>div{display:flex;flex-direction:column;gap:4px}.account-invoice-row .micro{font-size:10px;color:#777;font-weight:800;letter-spacing:.08em}@media(max-width:600px){.account-invoice-row{align-items:stretch;flex-direction:column}.account-invoice-row .btn{width:100%}}
+
+/* v17 returns */
+.account-return-row{margin-top:16px;padding-top:16px;border-top:1px solid #e8e8e8}.return-status-box{display:grid;gap:5px;padding:14px;background:#f6f6f6}.return-dialog{width:min(620px,calc(100% - 24px));border:0;padding:0}.return-dialog::backdrop{background:rgba(0,0,0,.65)}.return-form{display:grid;gap:16px;padding:28px}.return-form label{display:grid;gap:7px;font-weight:700}.return-form select,.return-form textarea,.return-form input[type=file]{width:100%;padding:12px;border:1px solid #ccc;background:white;font:inherit}.admin-return-box{margin-top:18px;padding:18px;border:2px solid #111}.return-evidence-admin{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.admin-return-box .admin-update-row{flex-wrap:wrap}.admin-return-box input,.admin-return-box select{min-width:180px}

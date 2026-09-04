@@ -1,0 +1,17 @@
+WEAR TANVRA v17 validation
+==========================
+- Worker JavaScript syntax: PASS
+- Customer account JavaScript syntax: PASS
+- Admin JavaScript syntax: PASS
+- Checkout JavaScript syntax: PASS
+- Product catalogue rebuilt: PASS
+- D1 migration 0007 present: PASS
+- Customer return API present: PASS
+- Private R2 evidence API present: PASS
+- Admin review API present: PASS
+- Razorpay server-side refund API present: PASS
+- Razorpay refund webhook handling present: PASS
+- Customer SENT_TO_TADDA mapping hidden as Processing: PASS
+- Return window default: 48 hours
+- Allowed reasons: DAMAGED / TORN / DIRTY
+- Evidence: up to 4 files; images <= 8 MB, videos <= 20 MB

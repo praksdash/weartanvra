@@ -18,6 +18,17 @@ const ADMIN_STATUSES = new Set([
 const COD_ONLY_STATUSES = new Set(['COD_CONFIRMATION_REQUIRED','COD_CONFIRMED']);
 const PREPAID_ONLY_STATUSES = new Set(['PENDING_PAYMENT','AUTHORIZED','PAID']);
 
+const RETURN_REASONS = new Set(['DAMAGED','TORN','DIRTY']);
+const RETURN_STATUSES = new Set([
+  'RETURN_REQUESTED','UNDER_REVIEW','APPROVED','REJECTED',
+  'REFUND_PENDING','REFUNDED','REPLACEMENT_PROCESSING',
+  'REPLACEMENT_DISPATCHED','COMPLETED'
+]);
+const RETURN_ADMIN_STATUSES = RETURN_STATUSES;
+const RETURN_EVIDENCE_MIME = new Set([
+  'image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'
+]);
+
 function orderEnvironment(env){
   return String(env.ORDER_ENVIRONMENT||'TEST').toUpperCase()==='LIVE' ? 'LIVE' : 'TEST';
 }
@@ -665,7 +676,79 @@ async function adminOrder(env,id){
   row.events=(await env.DB.prepare(
     `SELECT event_type,status,note,created_at FROM order_events WHERE order_id=? ORDER BY id DESC LIMIT 100`
   ).bind(id).all()).results||[];
+  const rr=await latestReturn(env,id);
+  if(rr) row.return_request={...rr,evidence:await returnEvidenceList(env,rr.id)};
   return row;
+}
+
+
+function friendlyReturnStatus(status){
+  return ({
+    RETURN_REQUESTED:'Return requested',
+    UNDER_REVIEW:'Under review',
+    APPROVED:'Approved',
+    REJECTED:'Not approved',
+    REFUND_PENDING:'Refund processing',
+    REFUNDED:'Refunded',
+    REPLACEMENT_PROCESSING:'Replacement processing',
+    REPLACEMENT_DISPATCHED:'Replacement dispatched',
+    COMPLETED:'Completed'
+  })[status]||status;
+}
+function returnWindowHours(env){
+  const n=Number(env.RETURN_WINDOW_HOURS||48);
+  return Math.max(1,Math.min(168,Number.isFinite(n)?n:48));
+}
+async function deliveredAt(env,orderId){
+  const ev=await env.DB.prepare(`SELECT created_at FROM order_events WHERE order_id=? AND status='DELIVERED' ORDER BY id ASC LIMIT 1`).bind(orderId).first();
+  return ev?.created_at||null;
+}
+async function returnEligibility(env,order){
+  if(!order || order.status!=='DELIVERED') return {eligible:false,reason:'Returns can be requested only after delivery'};
+  const at=await deliveredAt(env,order.id);
+  if(!at) return {eligible:false,reason:'Delivery confirmation was not found'};
+  const deadline=new Date(new Date(at).getTime()+returnWindowHours(env)*3600000);
+  return {eligible:Date.now()<=deadline.getTime(),delivered_at:at,deadline:deadline.toISOString(),window_hours:returnWindowHours(env)};
+}
+async function latestReturn(env,orderId){
+  return await env.DB.prepare(`SELECT * FROM return_requests WHERE order_id=? ORDER BY requested_at DESC LIMIT 1`).bind(orderId).first();
+}
+function publicReturn(r){
+  if(!r) return null;
+  return {
+    id:r.id,order_id:r.order_id,reason:r.reason,description:r.description,
+    preference:r.preference,status:r.status,status_label:friendlyReturnStatus(r.status),
+    requested_at:r.requested_at,updated_at:r.updated_at,admin_message:r.customer_message||null,
+    refund_amount:r.refund_amount||null,replacement_tracking:r.replacement_tracking||null
+  };
+}
+async function returnEvidenceList(env,returnId){
+  const x=await env.DB.prepare(`SELECT id,file_name,mime_type,size_bytes,uploaded_at FROM return_evidence WHERE return_id=? ORDER BY uploaded_at ASC`).bind(returnId).all();
+  return x.results||[];
+}
+async function notifyReturnCustomer(env,returnId){
+  const r=await env.DB.prepare(`SELECT r.*,o.customer_json FROM return_requests r JOIN orders o ON o.id=r.order_id WHERE r.id=?`).bind(returnId).first();
+  if(!r) return {sent:false,reason:'Return request not found'};
+  const customer=JSON.parse(r.customer_json||'{}');
+  const email=normalEmail(r.customer_email||customer.email);
+  if(!validEmail(email)) return {sent:false,reason:'Customer email missing'};
+  const store=env.STORE_URL||'https://weartanvra.com';
+  const html=`<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;padding:24px;color:#111"><div style="max-width:620px;margin:auto;background:white;padding:28px"><div style="font-size:12px;letter-spacing:.18em;font-weight:700">WEAR TANVRA</div><h1>${esc(friendlyReturnStatus(r.status))}</h1><p>Return request <b>${esc(r.id)}</b> for order <b>${esc(r.order_id)}</b>.</p><p><b>Reason:</b> ${esc(r.reason)}<br><b>Status:</b> ${esc(friendlyReturnStatus(r.status))}</p>${r.customer_message?`<p>${esc(r.customer_message)}</p>`:''}${r.refund_amount?`<p><b>Refund amount:</b> ${money(r.refund_amount)}</p>`:''}${r.replacement_tracking?`<p><b>Replacement tracking:</b> ${esc(r.replacement_tracking)}</p>`:''}<p><a href="${store}/account.html" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:13px 18px;font-weight:700">VIEW MY ORDERS</a></p></div></body></html>`;
+  return sendResend(env,{to:email,subject:`${friendlyReturnStatus(r.status)} • ${r.order_id}`,html,replyTo:env.OWNER_EMAIL||undefined});
+}
+async function razorpayRefund(env,order,amountRupees,returnId){
+  if(!env.RAZORPAY_KEY_ID||!env.RAZORPAY_KEY_SECRET) throw Error('Razorpay is not configured');
+  if(!order.razorpay_payment_id) throw Error('Razorpay payment ID is missing');
+  assertGatewayEnvironment(env);
+  const amount=Math.round(Number(amountRupees)*100);
+  if(!Number.isInteger(amount)||amount<100||amount>Number(order.total)*100) throw Error('Invalid refund amount');
+  const rp=await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(order.razorpay_payment_id)}/refund`,{
+    method:'POST',headers:{Authorization:basic(env.RAZORPAY_KEY_ID,env.RAZORPAY_KEY_SECRET),'Content-Type':'application/json'},
+    body:JSON.stringify({amount,notes:{order_id:order.id,return_id:returnId,source:'WEAR TANVRA admin'}})
+  });
+  const data=await rp.json().catch(()=>({}));
+  if(!rp.ok) throw Error(data?.error?.description||'Razorpay refund failed');
+  return data;
 }
 
 export default {
@@ -759,9 +842,81 @@ export default {
             r={...r,invoice_number:issued.invoice_number,invoice_issued_at:issued.invoice_issued_at};
           }
           const items=JSON.parse(r.items_json||'[]'); delete r.items_json;
-          orders.push({...r,items,invoice_available:!!r.invoice_number});
+          const rr=await latestReturn(env,r.id);
+          const eligibility=rr ? {eligible:false,reason:'Return request already submitted'} : await returnEligibility(env,r);
+          orders.push({...r,items,invoice_available:!!r.invoice_number,return_request:publicReturn(rr),return_eligibility:eligibility});
         }
         return json({orders,email:s.email},200,origin);
+      }
+
+
+      if(req.method==='POST' && url.pathname==='/api/account/returns'){
+        requireAllowedOrigin(req,env);
+        const sess=await requireCustomer(req,env);
+        await enforceRateLimit(env,`return-create:${sess.email}`,5,86400);
+        const body=await readJson(req);
+        const orderId=clean(body.order_id,100),reason=clean(body.reason,30).toUpperCase();
+        const description=clean(body.description,1200),preference=clean(body.preference,30).toUpperCase();
+        if(!RETURN_REASONS.has(reason)) throw Error('Choose damaged, torn, or dirty item');
+        if(!['REFUND','REPLACEMENT'].includes(preference)) throw Error('Choose refund or replacement');
+        if(description.length<10) throw Error('Please describe the issue');
+        const order=await env.DB.prepare(`SELECT * FROM orders WHERE id=? AND customer_email=?`).bind(orderId,sess.email).first();
+        if(!order) return json({error:'Order not found'},404,origin);
+        const eligibility=await returnEligibility(env,order);
+        if(!eligibility.eligible) return json({error:eligibility.reason,eligibility},409,origin);
+        const active=await env.DB.prepare(`SELECT id,status FROM return_requests WHERE order_id=? AND status NOT IN ('REJECTED','COMPLETED') ORDER BY requested_at DESC LIMIT 1`).bind(orderId).first();
+        if(active) return json({error:'A return request already exists for this order',return_id:active.id,status:active.status},409,origin);
+        const id=ref('WTR'); const ts=now();
+        await env.DB.prepare(`INSERT INTO return_requests(id,order_id,customer_email,reason,description,preference,status,requested_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)`).bind(id,orderId,sess.email,reason,description,preference,'RETURN_REQUESTED',ts,ts).run();
+        await event(env,orderId,'RETURN_REQUESTED',order.status,`${id} • ${reason} • ${preference}`);
+        try{await notifyReturnCustomer(env,id)}catch{}
+        return json({ok:true,return_request:publicReturn(await latestReturn(env,orderId)),evidence_required:true},201,origin);
+      }
+
+      if(req.method==='GET' && url.pathname==='/api/account/returns'){
+        const sess=await requireCustomer(req,env);
+        const orderId=clean(url.searchParams.get('order_id'),100);
+        let sql=`SELECT * FROM return_requests WHERE customer_email=?`,binds=[sess.email];
+        if(orderId){sql+=' AND order_id=?';binds.push(orderId)}
+        sql+=' ORDER BY requested_at DESC LIMIT 100';
+        const rs=await env.DB.prepare(sql).bind(...binds).all();
+        const out=[]; for(const r of (rs.results||[])) out.push({...publicReturn(r),evidence:await returnEvidenceList(env,r.id)});
+        return json({returns:out},200,origin);
+      }
+
+      if(req.method==='POST' && url.pathname==='/api/account/returns/evidence'){
+        requireAllowedOrigin(req,env);
+        const sess=await requireCustomer(req,env);
+        if(!env.RETURN_EVIDENCE) return json({error:'Evidence storage is not configured'},503,origin);
+        await enforceRateLimit(env,`return-upload:${sess.email}`,20,3600);
+        const returnId=clean(url.searchParams.get('return_id'),100);
+        const r=await env.DB.prepare(`SELECT * FROM return_requests WHERE id=? AND customer_email=?`).bind(returnId,sess.email).first();
+        if(!r) return json({error:'Return request not found'},404,origin);
+        if(['REJECTED','COMPLETED','REFUNDED'].includes(r.status)) return json({error:'This return request is closed'},409,origin);
+        const existing=await env.DB.prepare(`SELECT COUNT(*) c FROM return_evidence WHERE return_id=?`).bind(returnId).first();
+        if(Number(existing?.c||0)>=4) return json({error:'Maximum 4 evidence files allowed'},409,origin);
+        const mime=clean((req.headers.get('content-type')||'').split(';')[0],100).toLowerCase();
+        if(!RETURN_EVIDENCE_MIME.has(mime)) return json({error:'Use JPG, PNG, WEBP, MP4, WEBM or MOV evidence'},415,origin);
+        const max=mime.startsWith('video/')?20*1024*1024:8*1024*1024;
+        const declared=Number(req.headers.get('content-length')||0); if(declared>max) return json({error:'Evidence file is too large'},413,origin);
+        const bytes=await req.arrayBuffer(); if(bytes.byteLength>max||bytes.byteLength<1) return json({error:'Evidence file is empty or too large'},413,origin);
+        const rawName=clean(req.headers.get('x-file-name')||'evidence',120).replace(/[^A-Za-z0-9._-]/g,'_');
+        const ext=({ 'image/jpeg':'jpg','image/png':'png','image/webp':'webp','video/mp4':'mp4','video/webm':'webm','video/quicktime':'mov' })[mime]||'bin';
+        const evidenceId=ref('WTE'),key=`returns/${r.order_id}/${returnId}/${evidenceId}.${ext}`;
+        await env.RETURN_EVIDENCE.put(key,bytes,{httpMetadata:{contentType:mime},customMetadata:{return_id:returnId,order_id:r.order_id}});
+        await env.DB.prepare(`INSERT INTO return_evidence(id,return_id,object_key,file_name,mime_type,size_bytes,uploaded_at) VALUES(?,?,?,?,?,?,?)`).bind(evidenceId,returnId,key,rawName,mime,bytes.byteLength,now()).run();
+        await event(env,r.order_id,'RETURN_EVIDENCE_ADDED',null,`${returnId} • ${rawName}`);
+        return json({ok:true,evidence:{id:evidenceId,file_name:rawName,mime_type:mime,size_bytes:bytes.byteLength}},201,origin);
+      }
+
+      if(req.method==='GET' && url.pathname==='/api/account/returns/evidence'){
+        const sess=await requireCustomer(req,env);
+        if(!env.RETURN_EVIDENCE) return json({error:'Evidence storage is not configured'},503,origin);
+        const id=clean(url.searchParams.get('id'),100);
+        const e=await env.DB.prepare(`SELECT e.* FROM return_evidence e JOIN return_requests r ON r.id=e.return_id WHERE e.id=? AND r.customer_email=?`).bind(id,sess.email).first();
+        if(!e) return json({error:'Evidence not found'},404,origin);
+        const obj=await env.RETURN_EVIDENCE.get(e.object_key); if(!obj) return json({error:'Evidence file missing'},404,origin);
+        return new Response(obj.body,{headers:{...binaryHeaders(origin,e.mime_type,e.file_name), 'content-disposition':`inline; filename="${clean(e.file_name,100).replace(/["\\]/g,'_')}"`}});
       }
 
       if(req.method==='GET' && (url.pathname==='/api/account/invoice' || url.pathname==='/api/account/invoice.pdf')){
@@ -792,7 +947,7 @@ export default {
           const search=clean(url.searchParams.get('q'),100);
           const limit=Math.min(200,Math.max(1,Number(url.searchParams.get('limit'))||100));
 
-          let sql=`SELECT id,payment_method,status,environment,subtotal,discount,shipping,shipping_discount,total,currency,coupon,owner_notified_at,customer_notified_at,customer_notified_status,invoice_number,invoice_issued_at,created_at,updated_at,customer_json,items_json FROM orders`;
+          let sql=`SELECT id,payment_method,status,environment,subtotal,discount,shipping,shipping_discount,total,currency,coupon,owner_notified_at,customer_notified_at,customer_notified_status,invoice_number,invoice_issued_at,created_at,updated_at,customer_json,items_json,(SELECT status FROM return_requests rr WHERE rr.order_id=orders.id ORDER BY rr.requested_at DESC LIMIT 1) AS return_status FROM orders`;
           const clauses=[],binds=[];
           if(status && status!=='ALL'){ clauses.push('status=?'); binds.push(status); }
           if(search){
@@ -833,6 +988,68 @@ export default {
             try{ await notifyCustomer(env,id); }catch{}
           }
           return json({ok:true,order:await adminOrder(env,id)},200,origin);
+        }
+
+
+        if(req.method==='GET' && url.pathname==='/api/admin/returns'){
+          const status=clean(url.searchParams.get('status'),60);
+          let sql=`SELECT r.*,o.payment_method,o.total,o.razorpay_payment_id,o.customer_json FROM return_requests r JOIN orders o ON o.id=r.order_id`,binds=[];
+          if(status&&status!=='ALL'){sql+=' WHERE r.status=?';binds.push(status)}
+          sql+=' ORDER BY r.requested_at DESC LIMIT 200';
+          const rs=await env.DB.prepare(sql).bind(...binds).all();
+          const returns=(rs.results||[]).map(r=>({...r,customer:JSON.parse(r.customer_json||'{}')}));
+          returns.forEach(r=>delete r.customer_json);
+          return json({returns},200,origin);
+        }
+
+        if(req.method==='GET' && url.pathname==='/api/admin/return'){
+          const id=clean(url.searchParams.get('id'),100);
+          const r=await env.DB.prepare(`SELECT r.*,o.payment_method,o.total,o.razorpay_payment_id,o.customer_json,o.items_json FROM return_requests r JOIN orders o ON o.id=r.order_id WHERE r.id=?`).bind(id).first();
+          if(!r) return json({error:'Return request not found'},404,origin);
+          r.customer=JSON.parse(r.customer_json||'{}');r.items=JSON.parse(r.items_json||'[]');delete r.customer_json;delete r.items_json;
+          r.evidence=await returnEvidenceList(env,id);
+          return json({return_request:r},200,origin);
+        }
+
+        if(req.method==='GET' && url.pathname==='/api/admin/returns/evidence'){
+          if(!env.RETURN_EVIDENCE) return json({error:'Evidence storage is not configured'},503,origin);
+          const id=clean(url.searchParams.get('id'),100);
+          const e=await env.DB.prepare(`SELECT * FROM return_evidence WHERE id=?`).bind(id).first();
+          if(!e) return json({error:'Evidence not found'},404,origin);
+          const obj=await env.RETURN_EVIDENCE.get(e.object_key); if(!obj) return json({error:'Evidence file missing'},404,origin);
+          return new Response(obj.body,{headers:{...binaryHeaders(origin,e.mime_type,e.file_name), 'content-disposition':`inline; filename="${clean(e.file_name,100).replace(/["\\]/g,'_')}"`}});
+        }
+
+        if(req.method==='POST' && url.pathname==='/api/admin/return-status'){
+          const body=await readJson(req),id=clean(body.id,100),status=clean(body.status,60).toUpperCase();
+          const note=clean(body.note,1000),customerMessage=clean(body.customer_message,1000),tracking=clean(body.replacement_tracking,200);
+          if(!RETURN_ADMIN_STATUSES.has(status)) throw Error('Invalid return status');
+          const r=await env.DB.prepare(`SELECT * FROM return_requests WHERE id=?`).bind(id).first();
+          if(!r) return json({error:'Return request not found'},404,origin);
+          if(status==='REFUNDED') return json({error:'Use the Razorpay refund action for prepaid refunds'},409,origin);
+          const ts=now();
+          await env.DB.prepare(`UPDATE return_requests SET status=?,admin_note=?,customer_message=?,replacement_tracking=COALESCE(NULLIF(?,''),replacement_tracking),reviewed_at=CASE WHEN ? IN ('UNDER_REVIEW','APPROVED','REJECTED') THEN COALESCE(reviewed_at,?) ELSE reviewed_at END,updated_at=? WHERE id=?`).bind(status,note||null,customerMessage||null,tracking,status,ts,ts,id).run();
+          await event(env,r.order_id,'RETURN_STATUS_CHANGED',null,`${id} • ${status}`);
+          try{await notifyReturnCustomer(env,id)}catch{}
+          return json({ok:true,return_request:await env.DB.prepare(`SELECT * FROM return_requests WHERE id=?`).bind(id).first()},200,origin);
+        }
+
+        if(req.method==='POST' && url.pathname==='/api/admin/refund'){
+          await enforceRateLimit(env,`admin-refund:${clientIp(req)}`,10,3600);
+          const body=await readJson(req),returnId=clean(body.return_id,100);
+          const r=await env.DB.prepare(`SELECT r.*,o.payment_method,o.total,o.razorpay_payment_id,o.status order_status FROM return_requests r JOIN orders o ON o.id=r.order_id WHERE r.id=?`).bind(returnId).first();
+          if(!r) return json({error:'Return request not found'},404,origin);
+          if(r.payment_method!=='Prepaid') return json({error:'Razorpay refund is available only for prepaid orders'},409,origin);
+          if(!['APPROVED','REFUND_PENDING'].includes(r.status)) return json({error:'Approve the return before starting a refund'},409,origin);
+          if(r.razorpay_refund_id) return json({error:'A Razorpay refund already exists for this return',refund_id:r.razorpay_refund_id},409,origin);
+          const amount=Number(body.amount||r.total);
+          const order={id:r.order_id,total:r.total,razorpay_payment_id:r.razorpay_payment_id};
+          const refund=await razorpayRefund(env,order,amount,returnId);
+          const next=String(refund.status||'').toLowerCase()==='processed'?'REFUNDED':'REFUND_PENDING';
+          await env.DB.prepare(`UPDATE return_requests SET status=?,refund_amount=?,razorpay_refund_id=?,refund_status=?,updated_at=? WHERE id=?`).bind(next,amount,clean(refund.id,100),clean(refund.status,60),now(),returnId).run();
+          await event(env,r.order_id,'RAZORPAY_REFUND_CREATED',null,`${returnId} • ${clean(refund.id,100)} • ${money(amount)}`);
+          try{await notifyReturnCustomer(env,returnId)}catch{}
+          return json({ok:true,refund:{id:refund.id,status:refund.status,amount}},200,origin);
         }
 
         if(req.method==='POST' && url.pathname==='/api/admin/resend-notification'){
@@ -1007,7 +1224,7 @@ export default {
 
         const evt=JSON.parse(raw);
         const type=clean(evt.event,100);
-        if(!new Set(['payment.captured','payment.failed','order.paid']).has(type))
+        if(!new Set(['payment.captured','payment.failed','order.paid','refund.processed','refund.failed']).has(type))
           return json({ok:true,ignored:true},200,origin);
         const razorpayOrderId=
           evt?.payload?.payment?.entity?.order_id ||
@@ -1019,6 +1236,21 @@ export default {
           await env.DB.prepare(
             'INSERT INTO webhook_events(event_id,event_type,received_at) VALUES(?,?,?)'
           ).bind(eventId,type,now()).run();
+        }
+
+        if(type==='refund.processed'||type==='refund.failed'){
+          const refund=evt?.payload?.refund?.entity||{};
+          const refundId=clean(refund.id,100);
+          if(refundId){
+            const rr=await env.DB.prepare(`SELECT * FROM return_requests WHERE razorpay_refund_id=?`).bind(refundId).first();
+            if(rr){
+              const next=type==='refund.processed'?'REFUNDED':'APPROVED';
+              await env.DB.prepare(`UPDATE return_requests SET status=?,refund_status=?,updated_at=? WHERE id=?`).bind(next,clean(refund.status||type,60),now(),rr.id).run();
+              await event(env,rr.order_id,type==='refund.processed'?'REFUND_PROCESSED':'REFUND_FAILED',null,`${rr.id} • ${refundId}`);
+              try{await notifyReturnCustomer(env,rr.id)}catch{}
+            }
+          }
+          return json({ok:true},200,origin);
         }
 
         if(razorpayOrderId){

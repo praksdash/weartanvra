@@ -33,6 +33,8 @@ function assertStatusAllowed(paymentMethod,status){
 
 const now = () => new Date().toISOString();
 const clean = (v,n=300) => String(v ?? '').trim().slice(0,n);
+const normalEmail = v => clean(v,120).toLowerCase();
+function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalEmail(v)); }
 
 function originFor(req,env){
   const o=req.headers.get('Origin')||'';
@@ -58,12 +60,13 @@ function json(data,status=200,origin='*'){
 
 function validateCustomer(c){
   if(!c) throw Error('Missing customer');
-  for(const k of ['name','phone','pincode','address','city','state']){
+  for(const k of ['name','phone','email','pincode','address','city','state']){
     if(!clean(c[k])) throw Error(`Missing ${k}`);
   }
   const phone=clean(c.phone).replace(/\D/g,'');
   if(!/^\d{10}$/.test(phone)) throw Error('Phone must contain 10 digits');
   if(!/^\d{6}$/.test(clean(c.pincode))) throw Error('Pincode must contain 6 digits');
+  if(!validEmail(c.email)) throw Error('Enter a valid email address');
 }
 
 function price(order,env){
@@ -131,6 +134,29 @@ async function hmac(secret,msg){
   return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
+async function sha256(msg){
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(msg)));
+  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function randomCode(){
+  const a=new Uint32Array(1); crypto.getRandomValues(a);
+  return String(a[0]%1000000).padStart(6,'0');
+}
+function randomToken(){ return `${crypto.randomUUID()}-${crypto.randomUUID()}`; }
+function isoPlusMinutes(n){ return new Date(Date.now()+n*60000).toISOString(); }
+function isoPlusDays(n){ return new Date(Date.now()+n*86400000).toISOString(); }
+function razorpayMode(env){
+  const id=String(env.RAZORPAY_KEY_ID||'');
+  if(id.startsWith('rzp_live_')) return 'LIVE';
+  if(id.startsWith('rzp_test_')) return 'TEST';
+  return 'UNKNOWN';
+}
+function assertGatewayEnvironment(env){
+  const a=orderEnvironment(env),b=razorpayMode(env);
+  if(b==='UNKNOWN') throw Error('Razorpay key is not configured');
+  if(a!==b) throw Error(`Environment mismatch: ORDER_ENVIRONMENT=${a}, Razorpay=${b}`);
+}
+
 function safeEqual(a,b){
   a=String(a||''); b=String(b||'');
   if(a.length!==b.length) return false;
@@ -150,12 +176,12 @@ async function insertOrder(env,id,method,status,customer,items,p,coupon){
   const t=now(),environment=orderEnvironment(env);
   await env.DB.prepare(
     `INSERT INTO orders(
-      id,payment_method,status,customer_json,items_json,
+      id,payment_method,status,customer_json,items_json,customer_email,
       subtotal,discount,shipping,shipping_discount,total,currency,coupon,
       environment,created_at,updated_at
-    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).bind(
-    id,method,status,JSON.stringify(customer),JSON.stringify(items),
+    id,method,status,JSON.stringify(customer),JSON.stringify(items),normalEmail(customer.email),
     p.subtotal,p.discount,p.shipping,p.shippingIncludedDiscount,p.total,'INR',coupon||null,
     environment,t,t
   ).run();
@@ -288,6 +314,95 @@ async function notifyOwner(env,orderId,force=false){
   return {sent:true,id:data.id};
 }
 
+
+async function sendResend(env,{to,subject,html,replyTo}){
+  if(!env.RESEND_API_KEY || !env.FROM_EMAIL) return {sent:false,reason:'Email service is not configured'};
+  const response=await fetch('https://api.resend.com/emails',{
+    method:'POST',
+    headers:{'Authorization':`Bearer ${env.RESEND_API_KEY}`,'Content-Type':'application/json'},
+    body:JSON.stringify({from:env.FROM_EMAIL,to:[to],reply_to:replyTo||undefined,subject,html})
+  });
+  const data=await response.json().catch(()=>({}));
+  return response.ok?{sent:true,id:data.id}:{sent:false,reason:data?.message||'Email failed'};
+}
+
+function customerOrderEmailHtml(order){
+  const customer=JSON.parse(order.customer_json||'{}');
+  const items=JSON.parse(order.items_json||'[]');
+  const store=String(order.store_url||'https://weartanvra.com').replace(/\/$/,'');
+  const friendly={
+    COD_CONFIRMATION_REQUIRED:'Order received — COD confirmation may be required',
+    COD_CONFIRMED:'COD order confirmed',
+    PENDING_PAYMENT:'Payment pending',
+    AUTHORIZED:'Payment authorised',
+    PAID:'Payment confirmed',
+    SENT_TO_TADDA:'Order is being prepared',
+    PRINTING:'Printing / preparing',
+    DISPATCHED:'Order dispatched',
+    DELIVERED:'Order delivered',
+    CANCELLED:'Order cancelled',
+    PAYMENT_FAILED:'Payment failed'
+  }[order.status]||order.status;
+  const rows=items.map(i=>`<tr>
+    <td style="padding:10px 0;border-bottom:1px solid #eee"><b>${esc(i.product_id.replace(/[-_]/g,' '))}</b><br><span style="color:#666">${esc(i.color)} / ${esc(i.size)} • Qty ${esc(i.qty)}</span></td>
+    <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right">${money(i.unit_price*i.qty)}</td>
+  </tr>`).join('');
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111;background:#f5f5f5;padding:24px">
+  <div style="max-width:640px;margin:auto;background:#fff;padding:28px">
+    <div style="font-size:12px;letter-spacing:.18em;font-weight:700">WEAR TANVRA</div>
+    <h1>Thanks, ${esc(customer.name)}.</h1>
+    <p style="color:#555">${esc(friendly)}</p>
+    <div style="background:#111;color:#fff;padding:14px 16px;margin:22px 0">Order <b>${esc(order.id)}</b></div>
+    <table style="width:100%;border-collapse:collapse">${rows}</table>
+    <p style="line-height:1.8">Product total: ${money(order.subtotal)}<br>
+    ${Number(order.discount)>0?`Prepaid discount: -${money(order.discount)}<br>`:''}
+    ${Number(order.shipping)>0?`Shipping shown: ${money(order.shipping)}<br>Shipping included: -${money(order.shipping_discount)}<br>`:'Shipping: FREE<br>'}
+    <b>Final amount: ${money(order.total)}</b></p>
+    <p><b>Payment:</b> ${esc(order.payment_method)}<br><b>Status:</b> ${esc(friendly)}</p>
+    <p><a href="${store}/account.html" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:13px 18px;font-weight:700">VIEW MY ORDERS</a></p>
+    <p style="color:#777;font-size:12px;line-height:1.6;margin-top:26px">Keep this order reference for support. For damaged/torn/dirty-item claims, keep an unboxing video of the sealed parcel.</p>
+  </div></body></html>`;
+}
+
+async function notifyCustomer(env,orderId,force=false){
+  const order=await env.DB.prepare(`SELECT * FROM orders WHERE id=?`).bind(orderId).first();
+  if(!order) return {sent:false,reason:'Order not found'};
+  const customer=JSON.parse(order.customer_json||'{}');
+  const email=normalEmail(order.customer_email||customer.email);
+  if(!validEmail(email)) return {sent:false,reason:'Customer email is missing'};
+  if(!force && order.customer_notified_status===order.status) return {sent:false,duplicate:true};
+  order.store_url=env.STORE_URL||'https://weartanvra.com';
+  const subject=({
+    COD_CONFIRMATION_REQUIRED:`Order received • ${order.id}`,
+    COD_CONFIRMED:`COD order confirmed • ${order.id}`,
+    PAID:`Payment confirmed • ${order.id}`,
+    SENT_TO_TADDA:`Order is being prepared • ${order.id}`,
+    DISPATCHED:`Order dispatched • ${order.id}`,
+    DELIVERED:`Order delivered • ${order.id}`,
+    CANCELLED:`Order cancelled • ${order.id}`
+  })[order.status]||`Order update • ${order.id}`;
+  const result=await sendResend(env,{to:email,subject,html:customerOrderEmailHtml(order),replyTo:env.OWNER_EMAIL||undefined});
+  if(!result.sent){
+    await event(env,orderId,'CUSTOMER_EMAIL_FAILED',order.status,clean(result.reason,300));
+    return result;
+  }
+  await env.DB.prepare(`UPDATE orders SET customer_notified_at=?,customer_notified_status=?,updated_at=? WHERE id=?`)
+    .bind(now(),order.status,now(),orderId).run();
+  await event(env,orderId,'CUSTOMER_EMAIL_SENT',order.status,clean(result.id||'',100));
+  return result;
+}
+
+async function requireCustomer(req,env){
+  const auth=req.headers.get('Authorization')||'';
+  const token=auth.startsWith('Bearer ')?auth.slice(7):'';
+  if(!token) throw Error('UNAUTHORIZED');
+  const tokenHash=await sha256(token);
+  const row=await env.DB.prepare(`SELECT email,expires_at FROM customer_sessions WHERE token_hash=?`).bind(tokenHash).first();
+  if(!row || new Date(row.expires_at).getTime()<=Date.now()) throw Error('UNAUTHORIZED');
+  await env.DB.prepare(`UPDATE customer_sessions SET last_seen_at=? WHERE token_hash=?`).bind(now(),tokenHash).run();
+  return {email:row.email,tokenHash};
+}
+
 function requireAdmin(req,env){
   const auth=req.headers.get('Authorization')||'';
   const token=auth.startsWith('Bearer ')?auth.slice(7):'';
@@ -315,7 +430,7 @@ export default {
     try{
       // Public health/status endpoints expose no customer details.
       if(req.method==='GET' && url.pathname==='/api/health'){
-        return json({ok:true,service:'WEAR TANVRA Orders'},200,origin);
+        return json({ok:true,service:'WEAR TANVRA Orders',order_environment:orderEnvironment(env),razorpay_mode:razorpayMode(env)},200,origin);
       }
 
       if(req.method==='GET' && url.pathname==='/api/order-status'){
@@ -324,6 +439,64 @@ export default {
           `SELECT id,status,payment_method,total,currency,environment,updated_at FROM orders WHERE id=?`
         ).bind(id).first();
         return row ? json(row,200,origin) : json({error:'Order not found'},404,origin);
+      }
+
+
+      // ---------- Customer passwordless account ----------
+      if(req.method==='POST' && url.pathname==='/api/auth/request-code'){
+        if(!env.AUTH_SECRET) return json({error:'Customer login is not configured'},503,origin);
+        const body=await req.json(),email=normalEmail(body.email);
+        if(!validEmail(email)) throw Error('Enter a valid email address');
+        const existing=await env.DB.prepare(`SELECT created_at FROM login_codes WHERE email=?`).bind(email).first();
+        if(existing && (Date.now()-new Date(existing.created_at).getTime())<60000)
+          return json({error:'Please wait a minute before requesting another code.'},429,origin);
+        const code=randomCode(),codeHash=await hmac(env.AUTH_SECRET,`${email}|${code}`),expiresAt=isoPlusMinutes(10);
+        await env.DB.prepare(`INSERT INTO login_codes(email,code_hash,expires_at,attempts,created_at) VALUES(?,?,?,?,?)
+          ON CONFLICT(email) DO UPDATE SET code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0,created_at=excluded.created_at`)
+          .bind(email,codeHash,expiresAt,0,now()).run();
+        const result=await sendResend(env,{
+          to:email,subject:'Your WEAR TANVRA login code',
+          html:`<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:28px"><div style="font-size:12px;letter-spacing:.18em;font-weight:700">WEAR TANVRA</div><h1>Sign in to your account</h1><p>Your one-time login code is:</p><div style="font-size:34px;letter-spacing:.18em;font-weight:800;padding:18px 0">${esc(code)}</div><p>This code expires in 10 minutes.</p></div>`,
+          replyTo:env.OWNER_EMAIL||undefined
+        });
+        if(!result.sent) return json({error:result.reason||'Could not send login code'},502,origin);
+        return json({ok:true,message:'Login code sent'},200,origin);
+      }
+
+      if(req.method==='POST' && url.pathname==='/api/auth/verify-code'){
+        if(!env.AUTH_SECRET) return json({error:'Customer login is not configured'},503,origin);
+        const body=await req.json(),email=normalEmail(body.email),code=clean(body.code,6);
+        if(!validEmail(email)||!/^\d{6}$/.test(code)) throw Error('Invalid email or code');
+        const row=await env.DB.prepare(`SELECT code_hash,expires_at,attempts FROM login_codes WHERE email=?`).bind(email).first();
+        if(!row || new Date(row.expires_at).getTime()<=Date.now()) return json({error:'Code expired. Request a new code.'},400,origin);
+        if(Number(row.attempts||0)>=5) return json({error:'Too many attempts. Request a new code.'},429,origin);
+        const expected=await hmac(env.AUTH_SECRET,`${email}|${code}`);
+        if(!safeEqual(expected,row.code_hash)){
+          await env.DB.prepare(`UPDATE login_codes SET attempts=attempts+1 WHERE email=?`).bind(email).run();
+          return json({error:'Incorrect code'},400,origin);
+        }
+        await env.DB.prepare(`DELETE FROM login_codes WHERE email=?`).bind(email).run();
+        const token=randomToken(),tokenHash=await sha256(token),expiresAt=isoPlusDays(30);
+        await env.DB.prepare(`INSERT INTO customer_sessions(token_hash,email,expires_at,created_at,last_seen_at) VALUES(?,?,?,?,?)`)
+          .bind(tokenHash,email,expiresAt,now(),now()).run();
+        return json({ok:true,token,email,expires_at:expiresAt},200,origin);
+      }
+
+      if(req.method==='POST' && url.pathname==='/api/auth/logout'){
+        try{ const s=await requireCustomer(req,env); await env.DB.prepare(`DELETE FROM customer_sessions WHERE token_hash=?`).bind(s.tokenHash).run(); }catch{}
+        return json({ok:true},200,origin);
+      }
+
+      if(req.method==='GET' && url.pathname==='/api/account/me'){
+        try{ const s=await requireCustomer(req,env); return json({ok:true,email:s.email},200,origin); }
+        catch{ return json({error:'Unauthorized'},401,origin); }
+      }
+
+      if(req.method==='GET' && url.pathname==='/api/account/orders'){
+        let s; try{s=await requireCustomer(req,env)}catch{return json({error:'Unauthorized'},401,origin)}
+        const result=await env.DB.prepare(`SELECT id,payment_method,status,environment,subtotal,discount,shipping,shipping_discount,total,currency,coupon,created_at,updated_at,items_json FROM orders WHERE customer_email=? ORDER BY created_at DESC LIMIT 100`).bind(s.email).all();
+        const orders=(result.results||[]).map(r=>{const items=JSON.parse(r.items_json||'[]'); delete r.items_json; return {...r,items}});
+        return json({orders,email:s.email},200,origin);
       }
 
       // ---------- Admin API ----------
@@ -336,7 +509,7 @@ export default {
           const search=clean(url.searchParams.get('q'),100);
           const limit=Math.min(200,Math.max(1,Number(url.searchParams.get('limit'))||100));
 
-          let sql=`SELECT id,payment_method,status,environment,subtotal,discount,shipping,shipping_discount,total,currency,coupon,owner_notified_at,created_at,updated_at,customer_json,items_json FROM orders`;
+          let sql=`SELECT id,payment_method,status,environment,subtotal,discount,shipping,shipping_discount,total,currency,coupon,owner_notified_at,customer_notified_at,customer_notified_status,created_at,updated_at,customer_json,items_json FROM orders`;
           const clauses=[],binds=[];
           if(status && status!=='ALL'){ clauses.push('status=?'); binds.push(status); }
           if(search){
@@ -373,6 +546,9 @@ export default {
           if(!exists) return json({error:'Order not found'},404,origin);
           assertStatusAllowed(exists.payment_method,status);
           await updateStatus(env,id,status,null,note||null);
+          if(['COD_CONFIRMED','SENT_TO_TADDA','DISPATCHED','DELIVERED','CANCELLED'].includes(status)){
+            try{ await notifyCustomer(env,id); }catch{}
+          }
           return json({ok:true,order:await adminOrder(env,id)},200,origin);
         }
 
@@ -383,6 +559,13 @@ export default {
           return json({ok:true,result},200,origin);
         }
 
+        if(req.method==='POST' && url.pathname==='/api/admin/resend-customer-notification'){
+          const body=await req.json();
+          const id=clean(body.id,100);
+          const result=await notifyCustomer(env,id,true);
+          return json({ok:true,result},200,origin);
+        }
+
         return json({error:'Admin endpoint not found'},404,origin);
       }
 
@@ -390,6 +573,7 @@ export default {
       if(req.method==='POST' && url.pathname==='/api/create-order'){
         if(!env.RAZORPAY_KEY_ID||!env.RAZORPAY_KEY_SECRET)
           return json({error:'Gateway is not configured'},503,origin);
+        assertGatewayEnvironment(env);
 
         const order=await req.json();
         validateCustomer(order.customer);
@@ -434,6 +618,7 @@ export default {
       }
 
       if(req.method==='POST' && url.pathname==='/api/verify-payment'){
+        assertGatewayEnvironment(env);
         const b=await req.json();
         const id=clean(b.local_order_id,100);
         const payment=clean(b.razorpay_payment_id,100);
@@ -465,8 +650,8 @@ export default {
         await updateStatus(env,id,status,payment);
 
         if(status==='PAID'){
-          // Notification failure must never turn a paid order into a failed checkout.
           try{ await notifyOwner(env,id); }catch{}
+          try{ await notifyCustomer(env,id); }catch{}
         }
 
         return json({verified:true,status,order_id:id},200,origin);
@@ -484,6 +669,7 @@ export default {
         );
 
         try{ await notifyOwner(env,id); }catch{}
+        try{ await notifyCustomer(env,id); }catch{}
 
         return json({
           accepted:true,
@@ -536,6 +722,7 @@ export default {
             if(type==='payment.captured'||type==='order.paid'){
               await updateStatus(env,row.id,'PAID',paymentId);
               try{ await notifyOwner(env,row.id); }catch{}
+              try{ await notifyCustomer(env,row.id); }catch{}
             }else if(type==='payment.failed'){
               await updateStatus(env,row.id,'PAYMENT_FAILED',paymentId);
             }

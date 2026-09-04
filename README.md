@@ -123,3 +123,14 @@ New protections:
 - payment-method-specific status dropdowns,
 - red integrity warning if a mismatched legacy record somehow appears,
 - live Worker URL is already configured in `assets/config.js`.
+
+
+## v12
+- Customer order emails
+- Passwordless account login
+- My Orders history
+- Customer status emails
+- Required checkout email
+- Admin resend customer email
+- TEST/LIVE Razorpay mismatch guard
+- Live Worker URL retained

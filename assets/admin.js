@@ -107,7 +107,7 @@ function renderOrders(){
         <div><small>CUSTOMER</small><strong>${esc(c.name||'')}</strong><span>${esc(c.phone||'')}</span></div>
         <div><small>ITEMS</small><strong>${esc(itemText)}</strong></div>
         <div><small>PAYMENT</small><strong>${esc(o.payment_method)}</strong><span>${money(o.total)}</span></div>
-        <div><small>OWNER EMAIL</small><strong>${o.owner_notified_at?'SENT':'NOT SENT'}</strong></div>
+        <div><small>EMAILS</small><strong>Owner: ${o.owner_notified_at?'SENT':'NOT SENT'}</strong><span>Customer: ${o.customer_notified_at?'SENT':'NOT SENT'}</span></div>
       </div>
       <button class="btn admin-view" type="button" data-view="${esc(o.id)}">VIEW / UPDATE</button>
     </article>`;
@@ -196,7 +196,7 @@ async function openOrder(id){
           <input data-admin-note placeholder="Optional note" value="${esc(o.admin_note||'')}">
           <button class="btn dark" type="button" data-save-status>SAVE STATUS</button>
         </div>
-        <button class="btn" type="button" data-resend-email>RESEND OWNER EMAIL</button>
+        <button class="btn" type="button" data-resend-email>RESEND OWNER EMAIL</button><button class="btn" type="button" data-resend-customer-email>RESEND CUSTOMER EMAIL</button>
       </section>
 
       <section>
@@ -229,6 +229,11 @@ async function openOrder(id){
         body:JSON.stringify({id:o.id})
       });
       showMessage(d.result?.sent?'Owner email sent.':(d.result?.reason||'Email not sent.'));
+      await load();
+    };
+    $('[data-resend-customer-email]').onclick=async()=>{
+      const d=await api('/api/admin/resend-customer-notification',{method:'POST',body:JSON.stringify({id:o.id})});
+      showMessage(d.result?.sent?'Customer email sent.':(d.result?.reason||'Customer email not sent.'));
       await load();
     };
 

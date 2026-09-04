@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111111">
+<meta name="robots" content="noindex,nofollow">
+<title>Orders Admin | WEAR TANVRA</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="admin-shell">
+  <header class="admin-header">
+    <div>
+      <div class="eyebrow">WEAR TANVRA</div>
+      <h1>ORDERS ADMIN</h1>
+    </div>
+    <div class="admin-header-actions">
+      <button class="btn" type="button" data-refresh>REFRESH</button>
+      <button class="btn" type="button" data-logout>LOCK</button>
+    </div>
+  </header>
+
+  <section class="admin-login" data-login>
+    <h2>Unlock dashboard</h2>
+    <p>Enter the private admin token configured in your Cloudflare Worker.</p>
+    <form data-login-form>
+      <input type="password" autocomplete="current-password" placeholder="Admin token" data-admin-token required>
+      <button class="btn dark" type="submit">UNLOCK</button>
+    </form>
+    <p class="micro">The token is kept only in this browser tab (sessionStorage), not in the website code.</p>
+  </section>
+
+  <main data-dashboard hidden>
+    <section class="admin-stats" data-stats></section>
+
+    <section class="admin-controls">
+      <input type="search" placeholder="Search order, name, phone, product…" data-search>
+      <select data-status-filter>
+        <option value="ALL">All statuses</option>
+        <option>COD_CONFIRMATION_REQUIRED</option>
+        <option>COD_CONFIRMED</option>
+        <option>PAID</option>
+        <option>AUTHORIZED</option>
+        <option>SENT_TO_TADDA</option>
+        <option>PRINTING</option>
+        <option>DISPATCHED</option>
+        <option>DELIVERED</option>
+        <option>CANCELLED</option>
+        <option>PAYMENT_FAILED</option>
+      </select>
+    </section>
+
+    <div class="admin-message" data-message hidden></div>
+    <section class="admin-orders" data-orders></section>
+  </main>
+</div>
+
+<dialog class="admin-dialog" data-dialog>
+  <button class="admin-dialog-close" type="button" data-dialog-close>×</button>
+  <div data-order-detail></div>
+</dialog>
+
+<script src="assets/config.js"></script>
+<script src="assets/generated-products.js"></script>
+<script src="assets/admin.js"></script>
+</body>
+</html>

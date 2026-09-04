@@ -85,3 +85,26 @@ Example prepaid on a ₹749 product:
 Shipping is shown simply as `FREE`.
 
 The same pricing rule is recalculated in the Cloudflare Worker so the browser and payment amount cannot disagree.
+
+
+## v10 — owner notifications + order admin
+
+New:
+- owner email notification on new COD orders,
+- owner email notification only after prepaid order becomes PAID,
+- Resend integration from the Cloudflare Worker,
+- duplicate owner-email prevention,
+- secure `/admin.html` dashboard,
+- private bearer-token admin API,
+- order search/filter,
+- detailed customer/address/item/payment view,
+- operational status updates,
+- COD confirmation workflow,
+- T-Adda handoff status,
+- order timeline/events,
+- manual owner-email resend,
+- no customer data exposed by the public order-status endpoint.
+
+See:
+- `ORDER-MANAGEMENT.md`
+- `cloudflare-worker/README.md`

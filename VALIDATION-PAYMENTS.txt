@@ -1,9 +1,0 @@
-WEAR TANVRA Website v5 payment validation
-HTML pages: 13
-PREPAID50 configured: True
-Razorpay frontend loaded: True
-Cloudflare Worker included: True
-Server-side price recalculation: True
-Server-side signature verification: True
-Errors: 0
-PASS: package structure, internal links and JavaScript syntax validated.

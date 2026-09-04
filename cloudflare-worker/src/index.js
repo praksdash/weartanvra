@@ -36,6 +36,67 @@ const clean = (v,n=300) => String(v ?? '').trim().slice(0,n);
 const normalEmail = v => clean(v,120).toLowerCase();
 function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalEmail(v)); }
 
+
+const SECURITY_JSON_LIMIT = 32 * 1024;
+const PUBLIC_POST_PATHS = new Set([
+  '/api/auth/request-code','/api/auth/verify-code','/api/auth/logout',
+  '/api/create-order','/api/verify-payment','/api/cod-order'
+]);
+
+function clientIp(req){
+  return clean(req.headers.get('CF-Connecting-IP') || req.headers.get('x-forwarded-for') || 'unknown',80);
+}
+function isAllowedOrigin(req,env){
+  const origin=req.headers.get('Origin');
+  if(!origin) return true; // server-to-server / same-origin navigations may omit Origin
+  const allowed=String(env.ALLOWED_ORIGINS||'').split(',').map(x=>x.trim()).filter(Boolean);
+  return allowed.includes(origin);
+}
+function securityHeaders(){
+  return {
+    'x-content-type-options':'nosniff',
+    'x-frame-options':'DENY',
+    'referrer-policy':'strict-origin-when-cross-origin',
+    'permissions-policy':'camera=(), microphone=(), geolocation=(), payment=()',
+    'cross-origin-resource-policy':'same-site'
+  };
+}
+function jsonLengthOk(req){
+  const len=Number(req.headers.get('content-length')||0);
+  return !len || len <= SECURITY_JSON_LIMIT;
+}
+async function readJson(req){
+  if(!jsonLengthOk(req)) throw Object.assign(new Error('Request too large'),{status:413});
+  const text=await req.text();
+  if(text.length>SECURITY_JSON_LIMIT) throw Object.assign(new Error('Request too large'),{status:413});
+  try{return text?JSON.parse(text):{};}catch{throw Object.assign(new Error('Invalid JSON'),{status:400});}
+}
+function bucketStart(seconds){
+  const n=Math.floor(Date.now()/1000);
+  return new Date((n-(n%seconds))*1000).toISOString();
+}
+async function enforceRateLimit(env,key,limit,windowSeconds){
+  if(!env.DB) return;
+  const bucket=bucketStart(windowSeconds);
+  await env.DB.prepare(`INSERT INTO security_rate_limits(rate_key,bucket_start,hits,updated_at)
+    VALUES(?,?,1,?)
+    ON CONFLICT(rate_key,bucket_start) DO UPDATE SET hits=hits+1,updated_at=excluded.updated_at`)
+    .bind(key,bucket,now()).run();
+  const row=await env.DB.prepare(`SELECT hits FROM security_rate_limits WHERE rate_key=? AND bucket_start=?`)
+    .bind(key,bucket).first();
+  if(Number(row?.hits||0)>limit){
+    throw Object.assign(new Error('Too many requests. Please try again later.'),{status:429});
+  }
+  // Cheap opportunistic cleanup, about 1 in 64 requests.
+  if((crypto.getRandomValues(new Uint8Array(1))[0]&63)===0){
+    const cutoff=new Date(Date.now()-2*86400000).toISOString();
+    await env.DB.prepare(`DELETE FROM security_rate_limits WHERE updated_at<?`).bind(cutoff).run();
+  }
+}
+function requireAllowedOrigin(req,env){
+  if(!isAllowedOrigin(req,env)) throw Object.assign(new Error('Origin not allowed'),{status:403});
+}
+
 function originFor(req,env){
   const o=req.headers.get('Origin')||'';
   const allowed=String(env.ALLOWED_ORIGINS||'')
@@ -50,7 +111,8 @@ function headers(origin){
     'vary':'Origin',
     'access-control-allow-methods':'GET,POST,OPTIONS',
     'access-control-allow-headers':'Content-Type,Authorization,X-Razorpay-Signature,X-Razorpay-Event-Id',
-    'cache-control':'no-store'
+    'cache-control':'no-store',
+    ...securityHeaders()
   };
 }
 
@@ -425,7 +487,10 @@ async function adminOrder(env,id){
 export default {
   async fetch(req,env){
     const origin=originFor(req,env),url=new URL(req.url);
-    if(req.method==='OPTIONS') return new Response(null,{status:204,headers:headers(origin)});
+    if(req.method==='OPTIONS'){
+      if(!isAllowedOrigin(req,env)) return json({error:'Origin not allowed'},403,origin);
+      return new Response(null,{status:204,headers:headers(origin)});
+    }
 
     try{
       // Public health/status endpoints expose no customer details.
@@ -434,9 +499,10 @@ export default {
       }
 
       if(req.method==='GET' && url.pathname==='/api/order-status'){
+        await enforceRateLimit(env,`order-status:${clientIp(req)}`,60,300);
         const id=clean(url.searchParams.get('id'),100);
         const row=await env.DB.prepare(
-          `SELECT id,status,payment_method,total,currency,environment,updated_at FROM orders WHERE id=?`
+          `SELECT id,status,payment_method,total,currency,updated_at FROM orders WHERE id=?`
         ).bind(id).first();
         return row ? json(row,200,origin) : json({error:'Order not found'},404,origin);
       }
@@ -444,8 +510,11 @@ export default {
 
       // ---------- Customer passwordless account ----------
       if(req.method==='POST' && url.pathname==='/api/auth/request-code'){
+        requireAllowedOrigin(req,env);
+        await enforceRateLimit(env,`auth-code-ip:${clientIp(req)}`,8,600);
         if(!env.AUTH_SECRET) return json({error:'Customer login is not configured'},503,origin);
-        const body=await req.json(),email=normalEmail(body.email);
+        const body=await readJson(req),email=normalEmail(body.email);
+        await enforceRateLimit(env,`auth-code-email:${email}`,5,600);
         if(!validEmail(email)) throw Error('Enter a valid email address');
         const existing=await env.DB.prepare(`SELECT created_at FROM login_codes WHERE email=?`).bind(email).first();
         if(existing && (Date.now()-new Date(existing.created_at).getTime())<60000)
@@ -464,8 +533,10 @@ export default {
       }
 
       if(req.method==='POST' && url.pathname==='/api/auth/verify-code'){
+        requireAllowedOrigin(req,env);
+        await enforceRateLimit(env,`auth-verify-ip:${clientIp(req)}`,15,600);
         if(!env.AUTH_SECRET) return json({error:'Customer login is not configured'},503,origin);
-        const body=await req.json(),email=normalEmail(body.email),code=clean(body.code,6);
+        const body=await readJson(req),email=normalEmail(body.email),code=clean(body.code,6);
         if(!validEmail(email)||!/^\d{6}$/.test(code)) throw Error('Invalid email or code');
         const row=await env.DB.prepare(`SELECT code_hash,expires_at,attempts FROM login_codes WHERE email=?`).bind(email).first();
         if(!row || new Date(row.expires_at).getTime()<=Date.now()) return json({error:'Code expired. Request a new code.'},400,origin);
@@ -483,6 +554,7 @@ export default {
       }
 
       if(req.method==='POST' && url.pathname==='/api/auth/logout'){
+        requireAllowedOrigin(req,env);
         try{ const s=await requireCustomer(req,env); await env.DB.prepare(`DELETE FROM customer_sessions WHERE token_hash=?`).bind(s.tokenHash).run(); }catch{}
         return json({ok:true},200,origin);
       }
@@ -501,6 +573,8 @@ export default {
 
       // ---------- Admin API ----------
       if(url.pathname.startsWith('/api/admin/')){
+        requireAllowedOrigin(req,env);
+        await enforceRateLimit(env,`admin:${clientIp(req)}`,120,300);
         try{ requireAdmin(req,env); }
         catch{ return json({error:'Unauthorized'},401,origin); }
 
@@ -537,7 +611,7 @@ export default {
         }
 
         if(req.method==='POST' && url.pathname==='/api/admin/order-status'){
-          const body=await req.json();
+          const body=await readJson(req);
           const id=clean(body.id,100);
           const status=clean(body.status,60);
           const note=clean(body.note,500);
@@ -553,14 +627,14 @@ export default {
         }
 
         if(req.method==='POST' && url.pathname==='/api/admin/resend-notification'){
-          const body=await req.json();
+          const body=await readJson(req);
           const id=clean(body.id,100);
           const result=await notifyOwner(env,id,true);
           return json({ok:true,result},200,origin);
         }
 
         if(req.method==='POST' && url.pathname==='/api/admin/resend-customer-notification'){
-          const body=await req.json();
+          const body=await readJson(req);
           const id=clean(body.id,100);
           const result=await notifyCustomer(env,id,true);
           return json({ok:true,result},200,origin);
@@ -571,11 +645,13 @@ export default {
 
       // ---------- Checkout ----------
       if(req.method==='POST' && url.pathname==='/api/create-order'){
+        requireAllowedOrigin(req,env);
+        await enforceRateLimit(env,`prepaid:${clientIp(req)}`,20,600);
         if(!env.RAZORPAY_KEY_ID||!env.RAZORPAY_KEY_SECRET)
           return json({error:'Gateway is not configured'},503,origin);
         assertGatewayEnvironment(env);
 
-        const order=await req.json();
+        const order=await readJson(req);
         validateCustomer(order.customer);
         if(order.payment_method!=='Prepaid') throw Error('Prepaid endpoint only');
 
@@ -618,8 +694,10 @@ export default {
       }
 
       if(req.method==='POST' && url.pathname==='/api/verify-payment'){
+        requireAllowedOrigin(req,env);
+        await enforceRateLimit(env,`verify-payment:${clientIp(req)}`,30,600);
         assertGatewayEnvironment(env);
-        const b=await req.json();
+        const b=await readJson(req);
         const id=clean(b.local_order_id,100);
         const payment=clean(b.razorpay_payment_id,100);
         const signature=clean(b.razorpay_signature,200);
@@ -640,6 +718,8 @@ export default {
 
         if(!pr.ok||pd.order_id!==row.razorpay_order_id)
           return json({verified:false,error:'Payment status verification failed'},400,origin);
+        if(String(pd.currency||'').toUpperCase()!=='INR' || Number(pd.amount)!==Number(row.total)*100)
+          return json({verified:false,error:'Payment amount verification failed'},400,origin);
 
         const status=pd.status==='captured'
           ? 'PAID'
@@ -658,7 +738,9 @@ export default {
       }
 
       if(req.method==='POST' && url.pathname==='/api/cod-order'){
-        const order=await req.json();
+        requireAllowedOrigin(req,env);
+        await enforceRateLimit(env,`cod:${clientIp(req)}`,6,900);
+        const order=await readJson(req);
         validateCustomer(order.customer);
         if(order.payment_method!=='Cash on Delivery') throw Error('COD endpoint only');
 
@@ -681,10 +763,13 @@ export default {
 
       // ---------- Razorpay webhook ----------
       if(req.method==='POST' && url.pathname==='/api/webhooks/razorpay'){
+        await enforceRateLimit(env,`razorpay-webhook:${clientIp(req)}`,240,300);
+        if(!jsonLengthOk(req)) return json({error:'Request too large'},413,origin);
         if(!env.RAZORPAY_WEBHOOK_SECRET)
           return json({error:'Webhook secret not configured'},503,origin);
 
         const raw=await req.text();
+        if(raw.length>SECURITY_JSON_LIMIT) return json({error:'Request too large'},413,origin);
         const sig=clean(req.headers.get('X-Razorpay-Signature'),200);
         const eventId=clean(req.headers.get('X-Razorpay-Event-Id'),200);
         const expected=await hmac(env.RAZORPAY_WEBHOOK_SECRET,raw);
@@ -701,6 +786,8 @@ export default {
 
         const evt=JSON.parse(raw);
         const type=clean(evt.event,100);
+        if(!new Set(['payment.captured','payment.failed','order.paid']).has(type))
+          return json({ok:true,ignored:true},200,origin);
         const razorpayOrderId=
           evt?.payload?.payment?.entity?.order_id ||
           evt?.payload?.order?.entity?.id ||
@@ -715,16 +802,19 @@ export default {
 
         if(razorpayOrderId){
           const row=await env.DB.prepare(
-            'SELECT id,status FROM orders WHERE razorpay_order_id=?'
+            'SELECT id,status,payment_method,total FROM orders WHERE razorpay_order_id=?'
           ).bind(razorpayOrderId).first();
 
           if(row){
             if(type==='payment.captured'||type==='order.paid'){
-              await updateStatus(env,row.id,'PAID',paymentId);
+              if(row.payment_method!=='Prepaid') return json({ok:true,ignored:true},200,origin);
+              if(!['PAID','SENT_TO_TADDA','PRINTING','DISPATCHED','DELIVERED'].includes(row.status))
+                await updateStatus(env,row.id,'PAID',paymentId);
               try{ await notifyOwner(env,row.id); }catch{}
               try{ await notifyCustomer(env,row.id); }catch{}
             }else if(type==='payment.failed'){
-              await updateStatus(env,row.id,'PAYMENT_FAILED',paymentId);
+              if(row.payment_method==='Prepaid' && !['PAID','SENT_TO_TADDA','PRINTING','DISPATCHED','DELIVERED'].includes(row.status))
+                await updateStatus(env,row.id,'PAYMENT_FAILED',paymentId);
             }
           }
         }
@@ -735,7 +825,8 @@ export default {
       return json({error:'Not found'},404,origin);
 
     }catch(e){
-      return json({error:e?.message||'Bad request'},400,origin);
+      const status=Number(e?.status)||400;
+      return json({error:e?.message||'Bad request'},status,origin);
     }
   }
 };

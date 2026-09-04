@@ -158,3 +158,9 @@ Future product pricing should be changed in each product's `product.json`, then 
 `python scripts/build_products.py`
 
 See `PRICE-UPDATE-GUIDE.md`.
+
+## v15 — Security Hardened
+
+Adds D1 rate limiting, strict browser-origin checks, request size limits, security headers, exact Razorpay payment amount verification, safer webhook state handling, and migration `0005_security_hardening.sql`.
+
+Read `SECURITY-V15.md` before deployment. Apply the D1 migration before deploying the Worker.

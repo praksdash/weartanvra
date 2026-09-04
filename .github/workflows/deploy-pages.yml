@@ -1,15 +1,19 @@
 name: Build and Deploy WEAR TANVRA
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: pages
   cancel-in-progress: true
+
 jobs:
   deploy:
     environment:
@@ -18,14 +22,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Build catalogue
+
+      - name: Build product catalogue
         run: python scripts/build_products.py
+
+      - name: Build public site artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          mkdir -p dist
+          cp ./*.html dist/
+          cp CNAME robots.txt sitemap.xml .nojekyll dist/
+          cp -R assets dist/assets
+          cp -R products dist/products
+          # Print-production artwork must not be published with the storefront.
+          find dist/products -type d -name 'print-ready' -prune -exec rm -rf {} +
+          # Product metadata is needed by the generated catalogue only, not by visitors.
+          find dist/products -type f -name 'product.json' -delete
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: dist
+
       - id: deployment
         uses: actions/deploy-pages@v4

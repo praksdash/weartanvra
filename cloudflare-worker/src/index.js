@@ -21,7 +21,7 @@ const PREPAID_ONLY_STATUSES = new Set(['PENDING_PAYMENT','AUTHORIZED','PAID']);
 const RETURN_REASONS = new Set(['DAMAGED','TORN','DIRTY']);
 const RETURN_STATUSES = new Set([
   'RETURN_REQUESTED','UNDER_REVIEW','APPROVED','REJECTED',
-  'REFUND_PENDING','REFUNDED','REPLACEMENT_PROCESSING',
+  'REFUND_PENDING','PARTIALLY_REFUNDED','REFUNDED','REPLACEMENT_PROCESSING',
   'REPLACEMENT_DISPATCHED','COMPLETED'
 ]);
 const RETURN_ADMIN_STATUSES = RETURN_STATUSES;
@@ -689,7 +689,8 @@ function friendlyReturnStatus(status){
     APPROVED:'Approved',
     REJECTED:'Not approved',
     REFUND_PENDING:'Refund processing',
-    REFUNDED:'Refunded',
+    PARTIALLY_REFUNDED:'Partial Refund Processed',
+    REFUNDED:'Refund Processed',
     REPLACEMENT_PROCESSING:'Replacement processing',
     REPLACEMENT_DISPATCHED:'Replacement dispatched',
     COMPLETED:'Completed'
@@ -733,7 +734,11 @@ async function notifyReturnCustomer(env,returnId){
   const email=normalEmail(r.customer_email||customer.email);
   if(!validEmail(email)) return {sent:false,reason:'Customer email missing'};
   const store=env.STORE_URL||'https://weartanvra.com';
-  const html=`<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;padding:24px;color:#111"><div style="max-width:620px;margin:auto;background:white;padding:28px"><div style="font-size:12px;letter-spacing:.18em;font-weight:700">WEAR TANVRA</div><h1>${esc(friendlyReturnStatus(r.status))}</h1><p>Return request <b>${esc(r.id)}</b> for order <b>${esc(r.order_id)}</b>.</p><p><b>Reason:</b> ${esc(r.reason)}<br><b>Status:</b> ${esc(friendlyReturnStatus(r.status))}</p>${r.customer_message?`<p>${esc(r.customer_message)}</p>`:''}${r.refund_amount?`<p><b>Refund amount:</b> ${money(r.refund_amount)}</p>`:''}${r.replacement_tracking?`<p><b>Replacement tracking:</b> ${esc(r.replacement_tracking)}</p>`:''}<p><a href="${store}/account.html" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:13px 18px;font-weight:700">VIEW MY ORDERS</a></p></div></body></html>`;
+  const refundProcessed=['PARTIALLY_REFUNDED','REFUNDED'].includes(r.status);
+  const bankingNote=refundProcessed
+    ? `<div style="margin:18px 0;padding:14px;background:#f5f5f5"><b>Refund processed by WEAR TANVRA.</b><br>Your bank/UPI provider may take up to 5–7 business days to reflect the credit. Razorpay/bank tracking should be used if the credit is delayed.</div>`
+    : '';
+  const html=`<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;padding:24px;color:#111"><div style="max-width:620px;margin:auto;background:white;padding:28px"><div style="font-size:12px;letter-spacing:.18em;font-weight:700">WEAR TANVRA</div><h1>${esc(friendlyReturnStatus(r.status))}</h1><p>Return request <b>${esc(r.id)}</b> for order <b>${esc(r.order_id)}</b>.</p><p><b>Reason:</b> ${esc(r.reason)}<br><b>Status:</b> ${esc(friendlyReturnStatus(r.status))}</p>${r.customer_message?`<p>${esc(r.customer_message)}</p>`:''}${r.refund_amount?`<p><b>Refund amount:</b> ${money(r.refund_amount)}</p>`:''}${bankingNote}${r.replacement_tracking?`<p><b>Replacement tracking:</b> ${esc(r.replacement_tracking)}</p>`:''}<p><a href="${store}/account.html" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:13px 18px;font-weight:700">VIEW MY ORDERS</a></p></div></body></html>`;
   return sendResend(env,{to:email,subject:`${friendlyReturnStatus(r.status)} • ${r.order_id}`,html,replyTo:env.OWNER_EMAIL||undefined});
 }
 async function razorpayRefund(env,order,amountRupees,returnId){
@@ -892,7 +897,7 @@ export default {
         const returnId=clean(url.searchParams.get('return_id'),100);
         const r=await env.DB.prepare(`SELECT * FROM return_requests WHERE id=? AND customer_email=?`).bind(returnId,sess.email).first();
         if(!r) return json({error:'Return request not found'},404,origin);
-        if(['REJECTED','COMPLETED','REFUNDED'].includes(r.status)) return json({error:'This return request is closed'},409,origin);
+        if(['REJECTED','COMPLETED','PARTIALLY_REFUNDED','REFUNDED'].includes(r.status)) return json({error:'This return request is closed'},409,origin);
         const existing=await env.DB.prepare(`SELECT COUNT(*) c FROM return_evidence WHERE return_id=?`).bind(returnId).first();
         if(Number(existing?.c||0)>=4) return json({error:'Maximum 4 evidence files allowed'},409,origin);
         const mime=clean((req.headers.get('content-type')||'').split(';')[0],100).toLowerCase();
@@ -1026,7 +1031,7 @@ export default {
           if(!RETURN_ADMIN_STATUSES.has(status)) throw Error('Invalid return status');
           const r=await env.DB.prepare(`SELECT * FROM return_requests WHERE id=?`).bind(id).first();
           if(!r) return json({error:'Return request not found'},404,origin);
-          if(status==='REFUNDED') return json({error:'Use the Razorpay refund action for prepaid refunds'},409,origin);
+          if(['PARTIALLY_REFUNDED','REFUNDED'].includes(status)) return json({error:'Use the Razorpay refund action for prepaid refunds'},409,origin);
           const ts=now();
           await env.DB.prepare(`UPDATE return_requests SET status=?,admin_note=?,customer_message=?,replacement_tracking=COALESCE(NULLIF(?,''),replacement_tracking),reviewed_at=CASE WHEN ? IN ('UNDER_REVIEW','APPROVED','REJECTED') THEN COALESCE(reviewed_at,?) ELSE reviewed_at END,updated_at=? WHERE id=?`).bind(status,note||null,customerMessage||null,tracking,status,ts,ts,id).run();
           await event(env,r.order_id,'RETURN_STATUS_CHANGED',null,`${id} • ${status}`);
@@ -1037,15 +1042,18 @@ export default {
         if(req.method==='POST' && url.pathname==='/api/admin/refund'){
           await enforceRateLimit(env,`admin-refund:${clientIp(req)}`,10,3600);
           const body=await readJson(req),returnId=clean(body.return_id,100);
-          const r=await env.DB.prepare(`SELECT r.*,o.payment_method,o.total,o.razorpay_payment_id,o.status order_status FROM return_requests r JOIN orders o ON o.id=r.order_id WHERE r.id=?`).bind(returnId).first();
+          const r=await env.DB.prepare(`SELECT r.*,o.payment_method,o.total,o.razorpay_payment_id,o.status order_status,o.environment FROM return_requests r JOIN orders o ON o.id=r.order_id WHERE r.id=?`).bind(returnId).first();
           if(!r) return json({error:'Return request not found'},404,origin);
           if(r.payment_method!=='Prepaid') return json({error:'Razorpay refund is available only for prepaid orders'},409,origin);
+          if(String(r.environment||'TEST').toUpperCase()!=='LIVE') return json({error:'Refund disabled: this is a TEST order. Use a LIVE prepaid order for Razorpay refunds.'},409,origin);
+          if(orderEnvironment(env)!=='LIVE'||razorpayMode(env)!=='LIVE') return json({error:'Refund disabled: the payment backend is not in LIVE/LIVE mode.'},409,origin);
           if(!['APPROVED','REFUND_PENDING'].includes(r.status)) return json({error:'Approve the return before starting a refund'},409,origin);
           if(r.razorpay_refund_id) return json({error:'A Razorpay refund already exists for this return',refund_id:r.razorpay_refund_id},409,origin);
           const amount=Number(body.amount||r.total);
           const order={id:r.order_id,total:r.total,razorpay_payment_id:r.razorpay_payment_id};
           const refund=await razorpayRefund(env,order,amount,returnId);
-          const next=String(refund.status||'').toLowerCase()==='processed'?'REFUNDED':'REFUND_PENDING';
+          const processed=String(refund.status||'').toLowerCase()==='processed';
+          const next=processed ? (amount < Number(r.total) ? 'PARTIALLY_REFUNDED' : 'REFUNDED') : 'REFUND_PENDING';
           await env.DB.prepare(`UPDATE return_requests SET status=?,refund_amount=?,razorpay_refund_id=?,refund_status=?,updated_at=? WHERE id=?`).bind(next,amount,clean(refund.id,100),clean(refund.status,60),now(),returnId).run();
           await event(env,r.order_id,'RAZORPAY_REFUND_CREATED',null,`${returnId} • ${clean(refund.id,100)} • ${money(amount)}`);
           try{await notifyReturnCustomer(env,returnId)}catch{}
@@ -1242,9 +1250,11 @@ export default {
           const refund=evt?.payload?.refund?.entity||{};
           const refundId=clean(refund.id,100);
           if(refundId){
-            const rr=await env.DB.prepare(`SELECT * FROM return_requests WHERE razorpay_refund_id=?`).bind(refundId).first();
+            const rr=await env.DB.prepare(`SELECT r.*,o.total order_total FROM return_requests r JOIN orders o ON o.id=r.order_id WHERE r.razorpay_refund_id=?`).bind(refundId).first();
             if(rr){
-              const next=type==='refund.processed'?'REFUNDED':'APPROVED';
+              const next=type==='refund.processed'
+                ? (Number(rr.refund_amount||0) < Number(rr.order_total||0) ? 'PARTIALLY_REFUNDED' : 'REFUNDED')
+                : 'APPROVED';
               await env.DB.prepare(`UPDATE return_requests SET status=?,refund_status=?,updated_at=? WHERE id=?`).bind(next,clean(refund.status||type,60),now(),rr.id).run();
               await event(env,rr.order_id,type==='refund.processed'?'REFUND_PROCESSED':'REFUND_FAILED',null,`${rr.id} • ${refundId}`);
               try{await notifyReturnCustomer(env,rr.id)}catch{}

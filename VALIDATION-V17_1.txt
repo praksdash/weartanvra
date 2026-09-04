@@ -1,0 +1,20 @@
+WEAR TANVRA v17.1 validation
+================================
+Admin JavaScript syntax: PASS
+Customer account JavaScript syntax: PASS
+Checkout JavaScript syntax: PASS
+Worker JavaScript syntax: PASS
+
+Refund UX:
+- modal-local success/error messages: PASS
+- smaller responsive admin modal: PASS
+- TEST refund UI disabled: PASS
+- LIVE-only Worker refund guard: PASS
+- partial/full confirmation: PASS
+
+Refund semantics:
+- PARTIALLY_REFUNDED: PASS
+- REFUNDED full refund: PASS
+- refund.processed webhook classification: PASS
+- customer bank-delay wording: PASS
+- legacy partial refund repair migration 0008: PASS

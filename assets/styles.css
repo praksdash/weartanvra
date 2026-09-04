@@ -109,3 +109,59 @@
 
 /* v17 returns */
 .account-return-row{margin-top:16px;padding-top:16px;border-top:1px solid #e8e8e8}.return-status-box{display:grid;gap:5px;padding:14px;background:#f6f6f6}.return-dialog{width:min(620px,calc(100% - 24px));border:0;padding:0}.return-dialog::backdrop{background:rgba(0,0,0,.65)}.return-form{display:grid;gap:16px;padding:28px}.return-form label{display:grid;gap:7px;font-weight:700}.return-form select,.return-form textarea,.return-form input[type=file]{width:100%;padding:12px;border:1px solid #ccc;background:white;font:inherit}.admin-return-box{margin-top:18px;padding:18px;border:2px solid #111}.return-evidence-admin{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.admin-return-box .admin-update-row{flex-wrap:wrap}.admin-return-box input,.admin-return-box select{min-width:180px}
+
+/* v17.1 refund/admin modal UX */
+.admin-dialog{
+  width:min(820px,calc(100% - 20px));
+  max-height:86vh;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+.admin-dialog>div{padding:22px}
+.admin-dialog-message{
+  position:sticky;
+  top:0;
+  z-index:8;
+  margin:-4px 42px 16px 0;
+  padding:12px 14px;
+  background:#eaf7ee;
+  border:1px solid #abd1b5;
+  font-weight:800;
+  font-size:13px;
+}
+.admin-dialog-message[data-type="error"]{
+  background:#fff0f0;
+  border-color:#e1a7a7;
+  color:#941e1e;
+}
+.refund-action-box{
+  margin-top:14px;
+  padding:14px;
+  background:#f7f7f7;
+  border:1px solid #ccc;
+}
+.refund-action-copy{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  margin-bottom:10px;
+}
+.refund-action-copy span{font-size:12px;color:#555}
+.refund-disabled-box{
+  margin-top:14px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  background:#fff3e8;
+  border:1px solid #e3b58c;
+}
+.refund-disabled-box strong{color:#8a4300}
+.refund-disabled-box span{font-size:12px;color:#6f4a2b}
+@media(max-width:700px){
+  .admin-dialog{width:calc(100% - 10px);max-height:92vh}
+  .admin-dialog>div{padding:16px}
+  .admin-dialog-message{margin-right:38px}
+  .admin-update-row{grid-template-columns:1fr!important}
+  .admin-update-row .btn,.admin-update-row input,.admin-update-row select{width:100%}
+}

@@ -43,12 +43,22 @@ async function openAdminEvidence(id){
   if(!r.ok){const d=await r.json().catch(()=>({}));throw Error(d.error||'Could not open evidence')}
   const blob=await r.blob(),u=URL.createObjectURL(blob);window.open(u,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(u),60000);
 }
-function returnStatusLabel(s){return ({RETURN_REQUESTED:'Return requested',UNDER_REVIEW:'Under review',APPROVED:'Approved',REJECTED:'Rejected',REFUND_PENDING:'Refund pending',REFUNDED:'Refunded',REPLACEMENT_PROCESSING:'Replacement processing',REPLACEMENT_DISPATCHED:'Replacement dispatched',COMPLETED:'Completed'})[s]||s}
+function returnStatusLabel(s){return ({RETURN_REQUESTED:'Return requested',UNDER_REVIEW:'Under review',APPROVED:'Approved',REJECTED:'Rejected',REFUND_PENDING:'Refund processing',PARTIALLY_REFUNDED:'Partial Refund Processed',REFUNDED:'Refund Processed',REPLACEMENT_PROCESSING:'Replacement processing',REPLACEMENT_DISPATCHED:'Replacement dispatched',COMPLETED:'Completed'})[s]||s}
 function showMessage(text,type='ok'){
   const box=$('[data-message]');
   box.hidden=false; box.textContent=text; box.dataset.type=type;
   clearTimeout(showMessage.t);
   showMessage.t=setTimeout(()=>box.hidden=true,3500);
+}
+
+function showDialogMessage(text,type='ok'){
+  const dialog=$('[data-dialog]');
+  const box=dialog?.querySelector('[data-dialog-message]');
+  if(!box){ showMessage(text,type); return; }
+  box.hidden=false;
+  box.textContent=text;
+  box.dataset.type=type;
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 function lock(){
@@ -167,6 +177,7 @@ async function openOrder(id){
     const o=await api('/api/admin/order?id='+encodeURIComponent(id));
     const c=o.customer||{},items=o.items||[],events=o.events||[];
     $('[data-order-detail]').innerHTML=`
+      <div class="admin-dialog-message" data-dialog-message hidden></div>
       <div class="admin-detail-head">
         <div><p class="eyebrow">ORDER • ${esc(o.environment||'TEST')}</p><h2>${esc(o.id)}</h2><p>${esc(fmt(o.created_at))}</p></div>
         <span class="status-pill ${statusClass(o.status)}">${esc(o.status)}</span>
@@ -229,8 +240,12 @@ async function openOrder(id){
           <input data-return-tracking placeholder="Replacement tracking (optional)" value="${esc(o.return_request.replacement_tracking||'')}">
           <button class="btn dark" type="button" data-save-return>SAVE RETURN</button>
         </div>
-        ${o.payment_method==='Prepaid'&&['APPROVED','REFUND_PENDING'].includes(o.return_request.status)&&!o.return_request.razorpay_refund_id?`<div class="admin-update-row"><input type="number" min="1" max="${esc(o.total)}" step="1" data-refund-amount value="${esc(o.total)}"><button class="btn dark" type="button" data-refund>REFUND VIA RAZORPAY</button></div>`:''}
-        ${o.return_request.refund_amount?`<p><b>Refund:</b> ${money(o.return_request.refund_amount)} • ${esc(o.return_request.refund_status||o.return_request.status)}${o.return_request.razorpay_refund_id?` • ${esc(o.return_request.razorpay_refund_id)}`:''}</p>`:''}
+        ${o.payment_method==='Prepaid'&&['APPROVED','REFUND_PENDING'].includes(o.return_request.status)&&!o.return_request.razorpay_refund_id?(
+          String(o.environment||'TEST').toUpperCase()==='LIVE'
+            ? `<div class="refund-action-box"><div class="refund-action-copy"><strong>LIVE RAZORPAY REFUND</strong><span>Enter the amount to refund. Full order value: ${money(o.total)}.</span></div><div class="admin-update-row"><input type="number" min="1" max="${esc(o.total)}" step="1" data-refund-amount value="${esc(Math.max(1,Number(o.total)-Number(o.return_request.refund_amount||0)))}"><button class="btn dark" type="button" data-refund>REFUND VIA RAZORPAY</button></div></div>`
+            : `<div class="refund-disabled-box"><strong>REFUND DISABLED — TEST ORDER</strong><span>Razorpay LIVE refunds are available only for LIVE prepaid orders.</span></div>`
+        ):''}
+        ${o.return_request.refund_amount?`<p><b>Refund:</b> ${money(o.return_request.refund_amount)} • ${esc(returnStatusLabel(o.return_request.status))}${o.return_request.razorpay_refund_id?` • ${esc(o.return_request.razorpay_refund_id)}`:''}</p>`:''}
       </section>`:''}
 
       <section>
@@ -252,22 +267,43 @@ async function openOrder(id){
         method:'POST',
         body:JSON.stringify({id:o.id,status,note})
       });
-      showMessage('Order status updated.');
       await load();
       await openOrder(o.id);
+      showDialogMessage('Order status updated.');
     };
 
-    document.querySelectorAll('[data-admin-evidence]').forEach(btn=>btn.onclick=async()=>{try{await openAdminEvidence(btn.dataset.adminEvidence)}catch(e){showMessage(e.message,'error')}});
+    document.querySelectorAll('[data-admin-evidence]').forEach(btn=>btn.onclick=async()=>{try{await openAdminEvidence(btn.dataset.adminEvidence)}catch(e){showDialogMessage(e.message,'error')}});
     const saveReturn=$('[data-save-return]');
-    if(saveReturn) saveReturn.onclick=async()=>{saveReturn.disabled=true;try{await api('/api/admin/return-status',{method:'POST',body:JSON.stringify({id:o.return_request.id,status:$('[data-return-status]').value,customer_message:$('[data-return-customer-message]').value.trim(),replacement_tracking:$('[data-return-tracking]').value.trim()})});showMessage('Return status updated.');await load();await openOrder(o.id)}catch(e){showMessage(e.message,'error')}finally{saveReturn.disabled=false}};
+    if(saveReturn) saveReturn.onclick=async()=>{saveReturn.disabled=true;try{await api('/api/admin/return-status',{method:'POST',body:JSON.stringify({id:o.return_request.id,status:$('[data-return-status]').value,customer_message:$('[data-return-customer-message]').value.trim(),replacement_tracking:$('[data-return-tracking]').value.trim()})});await load();await openOrder(o.id);showDialogMessage('Return status updated.')}catch(e){showDialogMessage(e.message,'error')}finally{saveReturn.disabled=false}};
     const refundBtn=$('[data-refund]');
-    if(refundBtn) refundBtn.onclick=async()=>{const amount=Number($('[data-refund-amount]').value);if(!confirm(`Refund ${money(amount)} to this customer via Razorpay? This action sends real money.`))return;refundBtn.disabled=true;try{await api('/api/admin/refund',{method:'POST',body:JSON.stringify({return_id:o.return_request.id,amount})});showMessage('Razorpay refund started.');await load();await openOrder(o.id)}catch(e){showMessage(e.message,'error')}finally{refundBtn.disabled=false}};
+    if(refundBtn) refundBtn.onclick=async()=>{
+      const amount=Number($('[data-refund-amount]').value);
+      if(!Number.isFinite(amount)||amount<1||amount>Number(o.total)){
+        showDialogMessage(`Enter a refund amount between ${money(1)} and ${money(o.total)}.`,'error');
+        return;
+      }
+      const kind=amount<Number(o.total)?'PARTIAL':'FULL';
+      if(!confirm(`${kind} refund ${money(amount)} to this customer via Razorpay? This action sends real money.`))return;
+      refundBtn.disabled=true;
+      showDialogMessage('Sending refund request to Razorpay...');
+      try{
+        const d=await api('/api/admin/refund',{method:'POST',body:JSON.stringify({return_id:o.return_request.id,amount})});
+        await load();
+        await openOrder(o.id);
+        const label=amount<Number(o.total)?'Partial refund':'Full refund';
+        showDialogMessage(`${label} ${money(amount)} submitted to Razorpay. Status: ${d.refund?.status||'processing'}.`);
+      }catch(e){
+        showDialogMessage(e.message,'error');
+      }finally{
+        refundBtn.disabled=false;
+      }
+    };
 
     const invoiceBtn=$('[data-download-admin-invoice]');
     if(invoiceBtn) invoiceBtn.onclick=async()=>{
       invoiceBtn.disabled=true;
-      try{await downloadAdminInvoice(o.id);showMessage('Invoice downloaded.');}
-      catch(e){showMessage(e.message,'error')}
+      try{await downloadAdminInvoice(o.id);showDialogMessage('Invoice downloaded.');}
+      catch(e){showDialogMessage(e.message,'error')}
       finally{invoiceBtn.disabled=false}
     };
 
@@ -276,17 +312,22 @@ async function openOrder(id){
         method:'POST',
         body:JSON.stringify({id:o.id})
       });
-      showMessage(d.result?.sent?'Owner email sent.':(d.result?.reason||'Email not sent.'));
+      showDialogMessage(d.result?.sent?'Owner email sent.':(d.result?.reason||'Email not sent.'));
       await load();
     };
     $('[data-resend-customer-email]').onclick=async()=>{
       const d=await api('/api/admin/resend-customer-notification',{method:'POST',body:JSON.stringify({id:o.id})});
-      showMessage(d.result?.sent?'Customer email sent.':(d.result?.reason||'Customer email not sent.'));
+      showDialogMessage(d.result?.sent?'Customer email sent.':(d.result?.reason||'Customer email not sent.'));
       await load();
     };
 
-    $('[data-dialog]').showModal();
-  }catch(e){ showMessage(e.message,'error'); }
+    const dialog=$('[data-dialog]');
+    if(!dialog.open) dialog.showModal();
+  }catch(e){
+    const dialog=$('[data-dialog]');
+    if(dialog?.open) showDialogMessage(e.message,'error');
+    else showMessage(e.message,'error');
+  }
 }
 
 document.addEventListener('DOMContentLoaded',()=>{

@@ -172,3 +172,19 @@ v16 adds authenticated invoice issuance and PDF downloads for customers and admi
 
 ## v17 — Returns & Refunds
 Secure customer return requests, private R2 evidence uploads, admin review, replacement tracking, and Razorpay prepaid refunds. See `RETURNS-V17.md`.
+
+
+## v17.1 — refund UX + partial/full semantics
+
+Added:
+- all admin popup success/error messages render inside the popup,
+- smaller responsive/scrollable admin modal,
+- TEST orders show `REFUND DISABLED — TEST ORDER`,
+- Worker enforces LIVE-order + LIVE-backend for real refunds,
+- partial refunds use `PARTIALLY_REFUNDED`,
+- full refunds use `REFUNDED`,
+- customer wording is `Partial Refund Processed` / `Refund Processed`,
+- customer is told bank/UPI credit may take up to 5–7 business days,
+- migration `0008_refund_ux_semantics.sql` repairs old partial refunds previously labelled as full refunds.
+
+See `V17_1-REFUND-UX.md`.

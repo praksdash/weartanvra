@@ -1,0 +1,12 @@
+WEAR TANVRA v18.2 ABOUT VALIDATION
+=======================================
+about.html exists: PASS
+SEO title: PASS
+Meta description: PASS
+Main H1: PASS
+Opening copy: PASS
+About in sitemap: PASS
+About in homepage: PASS
+About in shop: PASS
+About CSS: PASS
+Validation errors: 0

@@ -197,3 +197,7 @@ Added manual cleanup scripts:
 - `cloudflare-worker/scripts/cleanup_test_orders.sql`
 
 These are intentionally not migrations. See `TEST-ORDER-CLEANUP.md`.
+
+
+## v18.1 SEO
+See `V18_1-SEO.md`. Adds homepage entity schema, full product sitemap and dynamic Product SEO/schema without changing commerce logic.

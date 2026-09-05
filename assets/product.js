@@ -1,9 +1,82 @@
+
+function setMeta(selector,attr,value){
+ let el=document.querySelector(selector);
+ if(!el){
+   el=document.createElement('meta');
+   if(selector.includes('name="')) el.setAttribute('name',selector.match(/name="([^"]+)"/)[1]);
+   else if(selector.includes('property="')) el.setAttribute('property',selector.match(/property="([^"]+)"/)[1]);
+   document.head.appendChild(el);
+ }
+ el.setAttribute(attr,value);
+}
+function setProductSeo(p,id){
+ const base='https://weartanvra.com/';
+ const canonicalUrl=`${base}product.html?id=${encodeURIComponent(id)}`;
+ const imagePath=(Array.isArray(p.images)&&p.images[0]) || (p.colors?.[0]?.image) || 'assets/wear-tanvra-logo.webp';
+ const imageUrl=new URL(imagePath,base).href;
+ const gsm=String(p.gsm||'').trim();
+ const material=String(p.material||'').trim();
+ const fit=String(p.fit||'').trim();
+ const title=`${p.name} | TANVRA Clothing India`;
+ const description=p.description
+   ? `${p.description} Shop TANVRA ${gsm} ${material} ${fit.toLowerCase()} streetwear with India-wide delivery.`.replace(/\s+/g,' ').trim()
+   : `${p.name} by TANVRA. Premium streetwear and T-shirts with India-wide delivery.`;
+
+ document.title=title;
+ setMeta('meta[name="description"]','content',description);
+
+ let canonical=document.querySelector('link[rel="canonical"]');
+ if(!canonical){
+   canonical=document.createElement('link');
+   canonical.rel='canonical';
+   document.head.appendChild(canonical);
+ }
+ canonical.href=canonicalUrl;
+
+ setMeta('meta[property="og:title"]','content',title);
+ setMeta('meta[property="og:description"]','content',description);
+ setMeta('meta[property="og:url"]','content',canonicalUrl);
+ setMeta('meta[property="og:image"]','content',imageUrl);
+
+ const schema={
+   "@context":"https://schema.org",
+   "@type":"Product",
+   "@id":`${canonicalUrl}#product`,
+   "name":p.name,
+   "image":(Array.isArray(p.images)&&p.images.length?p.images:[imagePath]).map(x=>new URL(x,base).href),
+   "description":p.description || description,
+   "brand":{"@type":"Brand","name":"TANVRA"},
+   "sku":id,
+   "category":"Apparel & Accessories > Clothing > Shirts & Tops",
+   "material":p.material || undefined,
+   "offers":{
+     "@type":"Offer",
+     "url":canonicalUrl,
+     "priceCurrency":"INR",
+     "price":String(p.price),
+     "availability":"https://schema.org/InStock",
+     "itemCondition":"https://schema.org/NewCondition",
+     "seller":{"@id":"https://weartanvra.com/#organization"}
+   }
+ };
+ Object.keys(schema).forEach(k=>schema[k]===undefined&&delete schema[k]);
+
+ let schemaTag=document.getElementById('product-schema');
+ if(!schemaTag){
+   schemaTag=document.createElement('script');
+   schemaTag.type='application/ld+json';
+   schemaTag.id='product-schema';
+   document.head.appendChild(schemaTag);
+ }
+ schemaTag.textContent=JSON.stringify(schema);
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
  const root=document.querySelector('[data-product-root]');if(!root)return;
  const id=new URLSearchParams(location.search).get('id'),p=TanvraStore.byId(id);
  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  if(!p){root.innerHTML='<div class="empty-state"><h1>PRODUCT NOT FOUND</h1><p>This product may have been removed or the link is incorrect.</p><a class="btn dark" href="shop.html">BACK TO SHOP</a></div>';return}
- document.title=`${p.name} | WEAR TANVRA`;
+ setProductSeo(p,id);
  let color=p.colors?.[0]?.name||'As Shown',size=p.sizes?.[0]||'M',active=0;
  const threshold=Number(TANVRA_CONFIG.shipping?.freeAbove||799),free=p.price>=threshold,pct=p.compareAt>p.price?Math.round((1-p.price/p.compareAt)*100):0;
  root.innerHTML=`<div class="product-layout">

@@ -1,0 +1,17 @@
+WEAR TANVRA v18.1 SEO VALIDATION
+====================================
+H1 visually unchanged: PASS
+No hidden seo-only: PASS
+Visible SEO eyebrow: PASS
+Organization schema: PASS
+WebSite schema: PASS
+Homepage canonical: PASS
+Dynamic title: PASS
+Dynamic canonical: PASS
+Product schema: PASS
+Actual price in schema: PASS
+All live product URLs in sitemap: PASS
+Sitemap declared in robots: PASS
+Products in sitemap: 6
+Total sitemap URLs: 14
+JS/XML validation errors: 0

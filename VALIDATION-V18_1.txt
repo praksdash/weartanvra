@@ -1,0 +1,11 @@
+WEAR TANVRA v18.1 validation
+Homepage SEO metadata: PASS
+Canonical/Open Graph URLs: PASS
+No Markdown URLs: PASS
+Accessible H1: PASS
+Instagram/mail links: PASS
+JS syntax: PASS
+Checkout/admin/account/returns preserved: PASS
+Worker/catalog preserved: PASS
+Razorpay config changed: NO
+D1 schema changed: NO

@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&nav.classList.contains('open'))closeMenu()});
 
     window.addEventListener('resize',()=>{
-      if(window.innerWidth>850&&nav.classList.contains('open'))closeMenu();
+      if(window.innerWidth>1100&&nav.classList.contains('open'))closeMenu();
     });
   }
 });

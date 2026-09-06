@@ -1,0 +1,13 @@
+TANVRA v19.7 VALIDATION
+===========================
+9 EDGE gallery images: PASS
+Local model path: PASS
+Local PNG cover: PASS
+No raw GitHub EDGE paths: PASS
+Black local colour: PASS
+Cream local colour: PASS
+Price remains ₹549: PASS
+Homepage local PNG: PASS
+v19.7 cache: PASS
+JS syntax: PASS
+Commerce/backend logic changed: NO

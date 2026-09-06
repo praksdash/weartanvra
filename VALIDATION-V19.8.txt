@@ -1,0 +1,13 @@
+TANVRA v19.8 VALIDATION
+===========================
+EDGE price ₹549: PASS
+All declared gallery images PNG: PASS
+Black image PNG: PASS
+Cream image PNG: PASS
+Homepage cover local PNG: PASS
+No EDGE webp references: PASS
+No raw GitHub EDGE references: PASS
+Builder folder images preferred: PASS
+Cache v19.8: PASS
+JS syntax: PASS
+Commerce/backend logic changed: NO

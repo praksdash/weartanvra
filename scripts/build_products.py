@@ -38,17 +38,20 @@ def build():
    if pid in ids: raise SystemExit(f'Duplicate product id: {pid}')
    ids.add(pid)
    paths=[rel(p) for p in imgs]
-   if declared_images:
+   if declared_images and not paths:
     declared_paths=[]
     for img in declared_images:
-     declared_paths.append(rel(folder/img) if '/' not in img else img)
-    # keep declared order, then append any local extras not already listed
-    paths=declared_paths+[p for p in paths if p not in declared_paths]
+     if str(img).startswith('http://') or str(img).startswith('https://'):
+      declared_paths.append(str(img))
+     else:
+      declared_paths.append(rel(folder/img) if '/' not in str(img) else str(img))
+    paths=declared_paths
    colors=meta.get('colors') or [{'name':'As Shown','hex':'#777777','image':paths[0]}]
    norm=[]
    for c in colors:
     c=dict(c); img=c.get('image')
-    if img and '/' not in img: c['image']=rel(folder/img)
+    if img and (str(img).startswith('http://') or str(img).startswith('https://')): c['image']=str(img)
+    elif img and '/' not in img: c['image']=rel(folder/img)
     elif not img: c['image']=paths[0]
     norm.append(c)
    prod={

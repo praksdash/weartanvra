@@ -18,12 +18,12 @@
     {
       "name": "Black",
       "hex": "#111111",
-      "image": "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/008-black-model-front.webp"
+      "image": "008-black-model-front.png"
     },
     {
       "name": "Cream",
       "hex": "#efe3ca",
-      "image": "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/004-cream-front.webp"
+      "image": "004-cream-front.png"
     }
   ],
   "collection": "ESSENTIALS",
@@ -31,14 +31,14 @@
   "featured": true,
   "sort": 5,
   "images": [
-    "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/008-black-model-front.webp",
-    "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/002-black-front.webp",
-    "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/003-black-back.webp",
-    "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/004-cream-front.webp",
-    "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/005-cream-back.webp",
-    "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/006-black-front-details.webp",
-    "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/007-black-back-detail.webp",
-    "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/008-neck-label.webp",
-    "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/001-cover.png"
+    "008-black-model-front.png",
+    "002-black-front.png",
+    "003-black-back.png",
+    "004-cream-front.png",
+    "005-cream-back.png",
+    "006-black-front-details.png",
+    "007-black-back-detail.png",
+    "008-neck-label.png",
+    "001-cover.png"
   ]
 }

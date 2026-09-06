@@ -66,24 +66,24 @@
       {
         "name": "Black",
         "hex": "#111111",
-        "image": "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/008-black-model-front.webp"
+        "image": "products/oversized/edge-01/008-black-model-front.png"
       },
       {
         "name": "Cream",
         "hex": "#efe3ca",
-        "image": "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/004-cream-front.webp"
+        "image": "products/oversized/edge-01/004-cream-front.png"
       }
     ],
     "images": [
-      "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/008-black-model-front.webp",
-      "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/002-black-front.webp",
-      "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/003-black-back.webp",
-      "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/004-cream-front.webp",
-      "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/005-cream-back.webp",
-      "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/006-black-front-details.webp",
-      "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/007-black-back-detail.webp",
-      "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/008-neck-label.webp",
-      "https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/001-cover.png"
+      "products/oversized/edge-01/008-black-model-front.png",
+      "products/oversized/edge-01/002-black-front.png",
+      "products/oversized/edge-01/003-black-back.png",
+      "products/oversized/edge-01/004-cream-front.png",
+      "products/oversized/edge-01/005-cream-back.png",
+      "products/oversized/edge-01/006-black-front-details.png",
+      "products/oversized/edge-01/007-black-back-detail.png",
+      "products/oversized/edge-01/008-neck-label.png",
+      "products/oversized/edge-01/001-cover.png"
     ],
     "featured": true,
     "sort": 5,

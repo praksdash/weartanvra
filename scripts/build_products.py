@@ -32,11 +32,18 @@ def build():
    if mf.exists(): meta=json.loads(mf.read_text(encoding='utf-8'))
    if meta.get('published',True) is False: continue
    imgs=sorted([p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_EXTS], key=image_rank)
-   if not imgs: continue
+   declared_images=meta.get('images') or []
+   if not imgs and not declared_images: continue
    d=DEFAULTS[cat]; slug=folder.name; pid=str(meta.get('id') or f'{cat}-{slug}')
    if pid in ids: raise SystemExit(f'Duplicate product id: {pid}')
    ids.add(pid)
    paths=[rel(p) for p in imgs]
+   if declared_images:
+    declared_paths=[]
+    for img in declared_images:
+     declared_paths.append(rel(folder/img) if '/' not in img else img)
+    # keep declared order, then append any local extras not already listed
+    paths=declared_paths+[p for p in paths if p not in declared_paths]
    colors=meta.get('colors') or [{'name':'As Shown','hex':'#777777','image':paths[0]}]
    norm=[]
    for c in colors:

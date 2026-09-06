@@ -96,6 +96,57 @@
     "printTier": "PLAIN"
   },
   {
+    "id": "oversized-edge-01",
+    "slug": "edge-01",
+    "category": "oversized",
+    "name": "EDGE-01 Oversized Tee",
+    "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
+    "price": 549,
+    "compareAt": 699,
+    "badge": "CORE",
+    "fit": "Oversized",
+    "gsm": "220 GSM",
+    "material": "100% Cotton",
+    "print": "Minimal / no large graphic",
+    "description": "Built around the silhouette that defines modern streetwear. Heavyweight 220 GSM cotton with a relaxed oversized shape, soft hand-feel and everyday durability. Minimal by design, so the fit does the talking.",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Black",
+        "hex": "#111111",
+        "image": "products/oversized/edge-01/front-black.webp"
+      },
+      {
+        "name": "Beige",
+        "hex": "#d8b36f",
+        "image": "products/oversized/edge-01/front-beige.webp"
+      }
+    ],
+    "images": [
+      "products/oversized/edge-01/008-black-model-front.png",
+      "products/oversized/edge-01/009-black-model-back.png",
+      "products/oversized/edge-01/010-cream-model-front.png",
+      "products/oversized/edge-01/011-cream-model-back.png",
+      "products/oversized/edge-01/006-fron-details.png",
+      "products/oversized/edge-01/007-back-details.png",
+      "products/oversized/edge-01/001-cover.png",
+      "products/oversized/edge-01/002-black-front.png",
+      "products/oversized/edge-01/003-black-back.png",
+      "products/oversized/edge-01/004-cream-front.png",
+      "products/oversized/edge-01/005-cream-back.png",
+      "products/oversized/edge-01/012-neck-label.png"
+    ],
+    "featured": false,
+    "sort": 100,
+    "collection": "ESSENTIALS",
+    "printTier": "PLAIN"
+  },
+  {
     "id": "oversized-ghost-compass",
     "slug": "ghost-compass",
     "category": "oversized",

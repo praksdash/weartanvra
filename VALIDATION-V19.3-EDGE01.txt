@@ -1,0 +1,14 @@
+TANVRA v19.3 EDGE 01 VALIDATION
+=================================
+Product ID: oversized-edge-01
+EDGE-01 product data: PASS
+Price ₹549: PASS
+Compare-at ₹699: PASS
+4 sizes: PASS
+4 colors configured: PASS
+220 GSM / 100% Cotton / Oversized: PASS
+Generated storefront catalog: PASS
+Cloudflare Worker price sync: PASS
+Dedicated edge-01.html: PASS
+Standard commerce product page: PASS
+JS syntax: PASS

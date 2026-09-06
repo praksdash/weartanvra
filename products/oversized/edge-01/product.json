@@ -1,0 +1,31 @@
+{
+  "name": "EDGE-01 Oversized Tee",
+  "price": 549,
+  "compareAt": 699,
+  "badge": "CORE",
+  "fit": "Oversized",
+  "gsm": "220 GSM",
+  "material": "100% Cotton",
+  "print": "Minimal / no large graphic",
+  "description": "Built around the silhouette that defines modern streetwear. Heavyweight 220 GSM cotton with a relaxed oversized shape, soft hand-feel and everyday durability. Minimal by design, so the fit does the talking.",
+  "sizes": [
+    "S",
+    "M",
+    "L",
+    "XL"
+  ],
+  "colors": [
+    {
+      "name": "Black",
+      "hex": "#111111",
+      "image": "front-black.webp"
+    },
+    {
+      "name": "Beige",
+      "hex": "#d8b36f",
+      "image": "front-beige.webp"
+    }
+  ],
+  "collection": "ESSENTIALS",
+  "printTier": "PLAIN"
+}

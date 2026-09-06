@@ -39,4 +39,33 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(window.innerWidth>1200&&nav.classList.contains('open'))closeMenu();
     });
   }
+
+  // EDGE 01 homepage media: use the same catalogue data as the product page.
+  const edgeMedia=document.querySelector('[data-edge01-media]');
+  if(edgeMedia && Array.isArray(window.TANVRA_PRODUCTS)){
+    const edge=window.TANVRA_PRODUCTS.find(p=>p.id==='oversized-edge-01');
+    if(edge){
+      const preferred=[
+        edge.images?.find(x=>/model-front/i.test(x)),
+        edge.colors?.find(c=>/black/i.test(c.name||''))?.image,
+        edge.images?.[0]
+      ].find(Boolean);
+      if(preferred){
+        const img=document.createElement('img');
+        img.className='edge01-real-image';
+        img.alt='TANVRA EDGE 01 oversized tee';
+        img.loading='lazy';
+        img.src=preferred;
+        img.onerror=()=>{
+          edgeMedia.hidden=true;
+          edgeMedia.closest('.edge01-preview-grid')?.classList.add('edge01-no-media');
+        };
+        edgeMedia.appendChild(img);
+      }else{
+        edgeMedia.hidden=true;
+        edgeMedia.closest('.edge01-preview-grid')?.classList.add('edge01-no-media');
+      }
+    }
+  }
+
 });

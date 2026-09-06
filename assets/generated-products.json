@@ -43,6 +43,76 @@
     "printTier": "A3"
   },
   {
+    "id": "oversized-edge-01",
+    "slug": "edge-01",
+    "category": "oversized",
+    "name": "EDGE-01 Oversized Tee",
+    "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
+    "price": 549,
+    "compareAt": 699,
+    "badge": "CORE",
+    "fit": "Oversized",
+    "gsm": "220 GSM",
+    "material": "100% Cotton",
+    "print": "Minimal / no large graphic",
+    "description": "Built around the silhouette that defines modern streetwear. Heavyweight 220 GSM cotton with a relaxed oversized shape, soft hand-feel and everyday durability. Minimal by design, so the fit does the talking.",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Black",
+        "hex": "#111111",
+        "image": "products/oversized/edge-01/002-black-front.webp"
+      },
+      {
+        "name": "Beige",
+        "hex": "#d8b36f",
+        "image": "products/oversized/edge-01/front-beige.webp"
+      },
+      {
+        "name": "White",
+        "hex": "#f5f5f5",
+        "image": "products/oversized/edge-01/004-cream-front.webp"
+      },
+      {
+        "name": "Avocado Green",
+        "hex": "#446b18",
+        "image": "products/oversized/edge-01/front-green.webp"
+      }
+    ],
+    "images": [
+      "products/oversized/edge-01/001-cover.webp",
+      "products/oversized/edge-01/008-black-model-front.webp",
+      "products/oversized/edge-01/002-black-front.webp",
+      "products/oversized/edge-01/003-black-back.webp",
+      "products/oversized/edge-01/004-cream-front.webp",
+      "products/oversized/edge-01/005-cream-back.webp",
+      "products/oversized/edge-01/006-black-front-details.webp",
+      "products/oversized/edge-01/007-black-back-detail.webp",
+      "products/oversized/edge-01/008-neck-label.webp",
+      "products/oversized/edge-01/008-black-model-front.png",
+      "products/oversized/edge-01/009-black-model-back.png",
+      "products/oversized/edge-01/010-cream-model-front.png",
+      "products/oversized/edge-01/011-cream-model-back.png",
+      "products/oversized/edge-01/006-fron-details.png",
+      "products/oversized/edge-01/007-back-details.png",
+      "products/oversized/edge-01/001-cover.png",
+      "products/oversized/edge-01/002-black-front.png",
+      "products/oversized/edge-01/003-black-back.png",
+      "products/oversized/edge-01/004-cream-front.png",
+      "products/oversized/edge-01/005-cream-back.png",
+      "products/oversized/edge-01/012-neck-label.png"
+    ],
+    "featured": true,
+    "sort": 5,
+    "collection": "ESSENTIALS",
+    "printTier": "PLAIN"
+  },
+  {
     "id": "oversized-core-220",
     "slug": "core-220",
     "category": "oversized",
@@ -89,57 +159,6 @@
       "products/oversized/core-220/front-black.webp",
       "products/oversized/core-220/front-green.webp",
       "products/oversized/core-220/front-white.webp"
-    ],
-    "featured": false,
-    "sort": 100,
-    "collection": "ESSENTIALS",
-    "printTier": "PLAIN"
-  },
-  {
-    "id": "oversized-edge-01",
-    "slug": "edge-01",
-    "category": "oversized",
-    "name": "EDGE-01 Oversized Tee",
-    "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
-    "price": 549,
-    "compareAt": 699,
-    "badge": "CORE",
-    "fit": "Oversized",
-    "gsm": "220 GSM",
-    "material": "100% Cotton",
-    "print": "Minimal / no large graphic",
-    "description": "Built around the silhouette that defines modern streetwear. Heavyweight 220 GSM cotton with a relaxed oversized shape, soft hand-feel and everyday durability. Minimal by design, so the fit does the talking.",
-    "sizes": [
-      "S",
-      "M",
-      "L",
-      "XL"
-    ],
-    "colors": [
-      {
-        "name": "Black",
-        "hex": "#111111",
-        "image": "products/oversized/edge-01/front-black.webp"
-      },
-      {
-        "name": "Beige",
-        "hex": "#d8b36f",
-        "image": "products/oversized/edge-01/front-beige.webp"
-      }
-    ],
-    "images": [
-      "products/oversized/edge-01/008-black-model-front.png",
-      "products/oversized/edge-01/009-black-model-back.png",
-      "products/oversized/edge-01/010-cream-model-front.png",
-      "products/oversized/edge-01/011-cream-model-back.png",
-      "products/oversized/edge-01/006-fron-details.png",
-      "products/oversized/edge-01/007-back-details.png",
-      "products/oversized/edge-01/001-cover.png",
-      "products/oversized/edge-01/002-black-front.png",
-      "products/oversized/edge-01/003-black-back.png",
-      "products/oversized/edge-01/004-cream-front.png",
-      "products/oversized/edge-01/005-cream-back.png",
-      "products/oversized/edge-01/012-neck-label.png"
     ],
     "featured": false,
     "sort": 100,

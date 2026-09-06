@@ -815,3 +815,131 @@
 .edge-product-thumbs{grid-template-columns:repeat(2,1fr)}
 .edge-product-benefits{grid-template-columns:1fr}
 }
+
+/* =========================================================
+   v19.4 EDGE 01 / MOBILE PRODUCT RECOVERY
+   ========================================================= */
+
+/* If EDGE image cannot load, never leave a giant empty rectangle. */
+.edge01-no-media{
+  grid-template-columns:1fr!important;
+}
+.edge01-no-media .edge01-preview-copy{
+  max-width:760px;
+}
+.edge01-preview-media[hidden]{
+  display:none!important;
+}
+
+/* The preview should not become taller than the content on compact screens. */
+@media(max-width:1200px){
+  .edge01-preview{
+    padding:58px 0!important;
+  }
+  .edge01-preview-grid{
+    grid-template-columns:1fr!important;
+    gap:30px!important;
+  }
+  .edge01-preview-media{
+    width:100%;
+    min-height:0!important;
+    aspect-ratio:4/5!important;
+    max-height:720px;
+  }
+  .edge01-real-image{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  /* Standard product page: stop squeezing gallery and information side-by-side. */
+  .product-layout{
+    grid-template-columns:1fr!important;
+    gap:28px!important;
+  }
+  .product-gallery,
+  .product-info{
+    width:100%!important;
+    min-width:0!important;
+  }
+  .product-info{
+    padding:0 0 58px!important;
+  }
+  .main-product-image{
+    width:100%!important;
+    aspect-ratio:4/5!important;
+    max-height:none!important;
+  }
+  .main-product-image img{
+    width:100%!important;
+    height:100%!important;
+    object-fit:cover!important;
+  }
+  .thumb-grid,
+  .product-thumbs{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  .product-info h1{
+    font-size:clamp(36px,8vw,58px)!important;
+    line-height:.96!important;
+  }
+  .product-cta{
+    position:static!important;
+  }
+  .product-cta .btn{
+    min-height:56px!important;
+    font-size:12px!important;
+  }
+  .size-options button,
+  .sizes button{
+    min-width:48px!important;
+    min-height:48px!important;
+  }
+}
+
+@media(max-width:600px){
+  .edge01-preview{
+    padding:46px 0!important;
+  }
+  .edge01-preview-copy .display-2{
+    font-size:46px!important;
+  }
+  .edge01-preview-media{
+    aspect-ratio:4/5!important;
+    max-height:none;
+  }
+  .thumb-grid,
+  .product-thumbs{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  }
+  .product-layout{
+    padding-top:22px!important;
+  }
+  .product-info h1{
+    font-size:38px!important;
+  }
+  .price.big strong{
+    font-size:30px!important;
+  }
+}
+
+/* Legacy edge-01.html is only a compatibility bridge now. */
+.edge-redirect-page{
+  background:#f6f4ef;
+}
+.edge-redirect-card{
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:flex-start;
+  gap:14px;
+}
+.edge-redirect-card h1{
+  font-size:clamp(48px,10vw,86px);
+  line-height:.9;
+  letter-spacing:-.05em;
+  margin:0;
+}

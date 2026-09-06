@@ -1,0 +1,23 @@
+TANVRA v19 PHASE 1 VALIDATION
+==================================
+index.html mobile toggle: PASS
+index.html drawer: PASS
+shop.html mobile toggle: PASS
+shop.html drawer: PASS
+product.html mobile toggle: PASS
+product.html drawer: PASS
+about.html mobile toggle: PASS
+about.html drawer: PASS
+cart.html mobile toggle: PASS
+cart.html drawer: PASS
+checkout.html mobile toggle: PASS
+checkout.html drawer: PASS
+account.html mobile toggle: PASS
+account.html drawer: PASS
+EDGE 01 homepage section: PASS
+EDGE 01 demo exists: PASS
+EDGE 01 not live product: PASS
+Drawer JS: PASS
+Drawer CSS: PASS
+JS syntax: PASS
+Commerce/backend logic changed: NO

@@ -187,3 +187,16 @@
   .about-hero-grid{grid-template-columns:1fr;gap:34px}
   .about-mark{min-height:320px;padding:50px}
 }
+
+/* v18.4 About page spacing fix */
+.about-hero{padding:56px 0}
+.about-hero-grid{align-items:center}
+.about-mark{min-height:340px;padding:48px}
+.about-hero + .premium-section{padding-top:56px;padding-bottom:56px}
+.about-values{margin-bottom:0}
+.about-hero + .premium-section + .editorial-band{margin-top:0}
+@media(max-width:850px){
+  .about-hero{padding:42px 0}
+  .about-mark{min-height:260px;padding:36px}
+  .about-hero + .premium-section{padding-top:44px;padding-bottom:44px}
+}

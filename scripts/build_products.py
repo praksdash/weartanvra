@@ -7,7 +7,7 @@ OUT_JSON=ROOT/'assets'/'generated-products.json'
 WORKER_CATALOG=ROOT/'cloudflare-worker'/'src'/'catalog.js'
 IMAGE_EXTS={'.jpg','.jpeg','.png','.webp'}
 DEFAULTS={
- 'oversized':{'price':479,'compareAt':699,'badge':'NEW','fit':'Oversized','gsm':'220 GSM','material':'100% Cotton','sizes':['S','M','L','XL']},
+ 'oversized':{'price':549,'compareAt':699,'badge':'NEW','fit':'Oversized','gsm':'220 GSM','material':'100% Cotton','sizes':['S','M','L','XL']},
  'regular':{'price':399,'compareAt':599,'badge':'NEW','fit':'Regular','gsm':'180 GSM','material':'100% Cotton','sizes':['S','M','L','XL']}
 }
 

@@ -1,0 +1,4 @@
+Price validation PASS
+Storefront generated products PASS
+Worker server-side catalogue PASS
+JS syntax PASS

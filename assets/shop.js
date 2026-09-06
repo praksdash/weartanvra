@@ -13,11 +13,10 @@ document.addEventListener('DOMContentLoaded',()=>{
          <div class="product-image"><span class="card-badge">${esc(p.badge)}</span><img src="${esc(p.images[0])}" alt="${esc(p.name)}" loading="lazy" decoding="async"></div>
          <div class="product-meta"><h3>${esc(p.name)}</h3><p>${esc(p.subtitle)}</p><div class="price"><strong>${TanvraStore.money(p.price)}</strong>${p.compareAt>p.price?`<s>${TanvraStore.money(p.compareAt)}</s>`:''}</div></div>
        </a>
-       <div class="card-actions"><button class="btn card-add" data-add="${esc(p.id)}">ADD TO BAG</button></div>
+       <div class="card-actions"><a class="btn card-view" href="product.html?id=${encodeURIComponent(p.id)}">VIEW PRODUCT</a></div>
      </article>`
    }).join('');
    empty.hidden=ps.length>0;
-   grid.querySelectorAll('[data-add]').forEach(btn=>btn.onclick=e=>{e.preventDefault();const p=TanvraStore.byId(btn.dataset.add);TanvraStore.add(TanvraStore.defaultVariant(p));btn.textContent='ADDED ✓';setTimeout(()=>btn.textContent='ADD TO BAG',900)});
    grid.querySelectorAll('[data-buy]').forEach(btn=>btn.onclick=e=>{e.preventDefault();const p=TanvraStore.byId(btn.dataset.buy);TanvraStore.add(TanvraStore.defaultVariant(p));location.href='checkout.html'});
  }
  search?.addEventListener('input',render);filter?.addEventListener('change',render);render();

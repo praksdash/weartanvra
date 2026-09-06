@@ -1,0 +1,13 @@
+TANVRA v19.5 VALIDATION
+===========================
+EDGE cover on homepage: PASS
+EDGE cover fallback: PASS
+EDGE product raw images: PASS
+EDGE price ₹549: PASS
+Rojana mobile class: PASS
+Shop VIEW PRODUCT: PASS
+Shop no ADD TO BAG: PASS
+Shop 1-col phone: PASS
+v19.5 cache: PASS
+JS syntax: PASS
+Commerce/backend logic changed: NO

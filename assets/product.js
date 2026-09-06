@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  let color=p.colors?.[0]?.name||'As Shown',size=p.sizes?.[0]||'M',active=0;
  const threshold=Number(TANVRA_CONFIG.shipping?.freeAbove||799),free=p.price>=threshold,pct=p.compareAt>p.price?Math.round((1-p.price/p.compareAt)*100):0;
  root.innerHTML=`<div class="product-layout">
- <section><div class="main-product-image"><img data-main-image src="${esc(p.images[0])}" alt="${esc(p.name)}"></div><div class="thumbs">${p.images.map((im,i)=>`<button class="thumb ${i===0?'active':''}" data-thumb="${i}"><img src="${esc(im)}" alt="${esc(p.name)} view ${i+1}"></button>`).join('')}</div></section>
+ <section><div class="main-product-image"><img data-main-image src="${esc(p.images[0])}" alt="${esc(p.name)}" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/praksdash/weartanvra/master/products/oversized/edge-01/008-black-model-front.webp'"></div><div class="thumbs">${p.images.map((im,i)=>`<button class="thumb ${i===0?'active':''}" data-thumb="${i}"><img src="${esc(im)}" alt="${esc(p.name)} view ${i+1}" onerror="this.closest('button').hidden=true"></button>`).join('')}</div></section>
  <section class="product-info"><p class="eyebrow">${esc(p.badge)}</p><h1>${esc(p.name)}</h1><p class="product-subtitle">${esc(p.subtitle)}</p>
  <div class="price big"><strong>${TanvraStore.money(p.price)}</strong>${p.compareAt>p.price?`<s>${TanvraStore.money(p.compareAt)}</s>`:''}${pct?`<span class="discount-chip">SAVE ${pct}%</span>`:''}</div>
  <div class="price-note">MRP inclusive of applicable taxes. ${free?'<strong>FREE SHIPPING</strong> on this product.':`Free shipping on orders ₹${threshold}+.`}</div>

@@ -943,3 +943,163 @@
   letter-spacing:-.05em;
   margin:0;
 }
+
+/* =========================================================
+   v19.5 TANVRA mobile/storefront refinement
+   ========================================================= */
+
+/* EDGE 01 homepage cover: editorial, finite height, never an empty giant block */
+.edge01-preview-media{
+  background:#ece7dc;
+  overflow:hidden;
+  min-height:0!important;
+  aspect-ratio:4/5;
+}
+.edge01-preview-media .edge01-real-image{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  display:block;
+}
+
+/* Rojana: use the width intentionally rather than leaving half the screen empty */
+.rojana-grid{
+  grid-template-columns:minmax(0,760px)!important;
+}
+.rojana-tile{
+  width:100%;
+}
+.rojana-tile img{
+  width:100%;
+  display:block;
+}
+
+/* Product cards are browsing surfaces, not quick-add commodity cards */
+.card-view{
+  width:100%;
+  min-height:48px;
+}
+.product-card-link{
+  display:block;
+}
+
+/* Compact tablet/mobile: fashion-first layout */
+@media(max-width:1200px){
+  .product-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:18px!important;
+  }
+  .shop-hero{
+    padding:48px 0 24px!important;
+  }
+  .edge01-preview-grid{
+    grid-template-columns:1fr!important;
+  }
+  .edge01-preview-media{
+    order:-1;
+    width:min(100%,720px);
+    margin:0 auto;
+    aspect-ratio:4/5;
+  }
+  .edge01-preview-copy{
+    max-width:760px;
+  }
+  .rojana-section{
+    padding-top:54px!important;
+    padding-bottom:54px!important;
+  }
+  .rojana-grid{
+    grid-template-columns:1fr!important;
+    width:100%;
+  }
+  .rojana-tile{
+    max-width:none!important;
+  }
+  .rojana-tile img{
+    width:100%!important;
+    max-height:680px;
+    object-fit:contain;
+    background:#f1efe9;
+  }
+  .product-layout{
+    grid-template-columns:1fr!important;
+  }
+  .main-product-image{
+    max-height:none!important;
+    aspect-ratio:4/5!important;
+  }
+  .main-product-image img{
+    width:100%!important;
+    height:100%!important;
+    object-fit:cover!important;
+  }
+}
+
+/* Actual phone layout */
+@media(max-width:700px){
+  .product-grid{
+    grid-template-columns:1fr!important;
+    gap:30px!important;
+  }
+  .product-card{
+    width:100%;
+  }
+  .product-image{
+    aspect-ratio:4/5!important;
+  }
+  .product-meta h3{
+    font-size:18px!important;
+  }
+  .price strong{
+    font-size:20px!important;
+  }
+  .edge01-preview{
+    padding:42px 0 50px!important;
+  }
+  .edge01-preview-media{
+    width:100%;
+  }
+  .edge01-preview-copy .display-2{
+    font-size:44px!important;
+    line-height:.92!important;
+  }
+  .rojana-section{
+    padding-top:42px!important;
+    padding-bottom:42px!important;
+  }
+  .rojana-section>.display-2{
+    font-size:42px!important;
+  }
+  .rojana-tile .collection-copy{
+    position:static!important;
+    background:#f4f1ea!important;
+    padding:22px!important;
+  }
+  .rojana-tile img{
+    max-height:none!important;
+    aspect-ratio:4/5;
+    object-fit:contain!important;
+  }
+  .thumbs{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:7px!important;
+  }
+  .thumb{
+    aspect-ratio:1/1.2;
+  }
+  .thumb img{
+    width:100%!important;
+    height:100%!important;
+    object-fit:cover!important;
+  }
+}
+
+/* Keep navigation header dominant and readable */
+@media(max-width:1200px){
+  .header .logo img{
+    width:164px!important;
+    max-width:164px!important;
+  }
+}

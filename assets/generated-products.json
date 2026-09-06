@@ -96,52 +96,6 @@
     "printTier": "PLAIN"
   },
   {
-    "id": "oversized-edge-01",
-    "slug": "edge-01",
-    "category": "oversized",
-    "name": "Edge 01 Oversized Tee",
-    "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
-    "price": 549,
-    "compareAt": 699,
-    "badge": "NEW",
-    "fit": "Oversized",
-    "gsm": "220 GSM",
-    "material": "100% Cotton",
-    "print": "Graphic print",
-    "description": "Edge 01 from WEAR TANVRA.",
-    "sizes": [
-      "S",
-      "M",
-      "L",
-      "XL"
-    ],
-    "colors": [
-      {
-        "name": "As Shown",
-        "hex": "#777777",
-        "image": "products/oversized/edge-01/008-black-model-front.webp"
-      }
-    ],
-    "images": [
-      "products/oversized/edge-01/008-black-model-front.webp",
-      "products/oversized/edge-01/009-black-model-back.webp",
-      "products/oversized/edge-01/010-cream-model-front.webp",
-      "products/oversized/edge-01/011-cream-model-back.webp",
-      "products/oversized/edge-01/006-black-front-details.webp",
-      "products/oversized/edge-01/007-black-back-detail.webp",
-      "products/oversized/edge-01/001-cover.webp",
-      "products/oversized/edge-01/002-black-front.webp",
-      "products/oversized/edge-01/003-black-back.webp",
-      "products/oversized/edge-01/004-cream-front.webp",
-      "products/oversized/edge-01/005-cream-back.webp",
-      "products/oversized/edge-01/008-neck-label.webp"
-    ],
-    "featured": false,
-    "sort": 100,
-    "collection": "GRAPHIC DROP",
-    "printTier": "GRAPHIC"
-  },
-  {
     "id": "oversized-ghost-compass",
     "slug": "ghost-compass",
     "category": "oversized",

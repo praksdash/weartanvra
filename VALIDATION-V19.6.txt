@@ -1,0 +1,10 @@
+TANVRA v19.6 VALIDATION
+===========================
+PNG cover metadata: PASS
+PNG cover homepage: PASS
+WEBP cover removed: PASS
+Hero failover logic: PASS
+Hero starts from color image: PASS
+Price stays 549: PASS
+JS syntax: PASS
+Commerce/backend logic changed: NO

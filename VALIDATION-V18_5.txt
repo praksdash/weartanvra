@@ -1,0 +1,8 @@
+WEAR TANVRA v18.5 VALIDATION
+==============================
+Homepage DISCOVER THE DROP CTA: PASS
+About EXPLORE THE DROP CTA: PASS
+Editorial button readable text CSS: PASS
+Hover/focus styling: PASS
+JavaScript syntax: PASS
+Commerce/backend logic changed: NO

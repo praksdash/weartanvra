@@ -200,3 +200,22 @@
   .about-mark{min-height:260px;padding:36px}
   .about-hero + .premium-section{padding-top:44px;padding-bottom:44px}
 }
+
+
+/* v18.5 Editorial CTA visibility fix
+   The editorial sections use white text globally, while .btn has a white background.
+   Force readable black text for CTA buttons inside dark editorial bands. */
+.editorial-band .btn{
+  background:#fff;
+  color:#111;
+  border-color:#fff;
+}
+.editorial-band .btn:visited{
+  color:#111;
+}
+.editorial-band .btn:hover,
+.editorial-band .btn:focus-visible{
+  background:#f0eee8;
+  color:#111;
+  border-color:#f0eee8;
+}

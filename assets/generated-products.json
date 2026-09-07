@@ -48,8 +48,8 @@
     "category": "oversized",
     "name": "EDGE-01 Oversized Tee",
     "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
-    "price": 599,
-    "compareAt": 599,
+    "price": 549,
+    "compareAt": 549,
     "badge": "CORE",
     "fit": "Oversized",
     "gsm": "220 GSM",
@@ -83,7 +83,11 @@
       "products/oversized/edge-01/006-black-front-details.webp",
       "products/oversized/edge-01/007-black-back-detail.webp",
       "products/oversized/edge-01/008-neck-label.webp",
-      "products/oversized/edge-01/001-cover.png"
+      "products/oversized/edge-01/001-cover.png",
+      "products/oversized/edge-01/002-black-front.png",
+      "products/oversized/edge-01/003-black-back.png",
+      "products/oversized/edge-01/004-cream-front.png",
+      "products/oversized/edge-01/005-cream-back.png"
     ],
     "featured": true,
     "sort": 5,

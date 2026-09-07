@@ -1,13 +1,23 @@
-TANVRA v19.8 VALIDATION
-===========================
-EDGE price ₹549: PASS
-All declared gallery images PNG: PASS
-Black image PNG: PASS
-Cream image PNG: PASS
-Homepage cover local PNG: PASS
-No EDGE webp references: PASS
-No raw GitHub EDGE references: PASS
-Builder folder images preferred: PASS
-Cache v19.8: PASS
+TANVRA v19.8 SINGLE PRICING VALIDATION
+=========================================
+pricing.json exists: PASS
+Core 549: PASS
+Rojana 749: PASS
+Ghost 699: PASS
+Not Fast 649: PASS
+Unleash 649: PASS
+Wild 649: PASS
+EDGE 599: PASS
+AFTER HOURS future 699: PASS
+LOST FOUND future 699: PASS
+ODISHA 20N future 699: PASS
+PREPAID50 = 50: PASS
+Worker prepaid 50 generated: PASS
+Shop LAUNCH PRICE: PASS
+Product LAUNCH PRICE: PASS
+No shop compare-at rendering: PASS
+No product compare-at rendering: PASS
+Individual product JSON prices removed: PASS
 JS syntax: PASS
-Commerce/backend logic changed: NO
+Python build syntax: PASS
+Commerce security preserved: PASS

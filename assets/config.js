@@ -8,7 +8,7 @@ window.TANVRA_CONFIG={
   checkoutMode:"razorpay",
   paymentBackendUrl:"https://weartanvra-payments.weartanvra.workers.dev",
 
-  prepaidCoupon:{code:"PREPAID50",discount:50},
+  prepaidCoupon:window.TANVRA_PRICING?.prepaidCoupon||{code:"PREPAID50",discount:50},
 
   // Customer shipping policy: FREE on merchandise subtotal >= ₹799.
   // Below threshold, use flat/minimum charges shown here.

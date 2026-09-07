@@ -1141,3 +1141,43 @@
     grid-template-columns:repeat(3,minmax(0,1fr))!important;
   }
 }
+
+/* =========================================================
+   v19.8 — Launch-price presentation
+   ========================================================= */
+.launch-price{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  margin-top:8px;
+}
+.launch-price span{
+  font-size:9px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.12em;
+  color:#6f6b63;
+}
+.launch-price strong{
+  font-size:20px;
+  color:#111;
+}
+.launch-price-product{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:7px;
+  margin:16px 0 8px;
+}
+.launch-price-product span{
+  font-size:10px;
+}
+.launch-price-product strong{
+  font-size:32px;
+  letter-spacing:-.03em;
+}
+.price s,
+.discount-chip,
+.sale-badge{
+  display:none!important;
+}

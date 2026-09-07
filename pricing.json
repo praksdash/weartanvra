@@ -1,0 +1,50 @@
+{
+  "currency": "INR",
+  "priceLabel": "LAUNCH PRICE",
+  "prepaidCoupon": {
+    "code": "PREPAID50",
+    "discount": 50
+  },
+  "products": {
+    "oversized-core-220": {
+      "name": "Core 220 Oversized Tee",
+      "price": 549
+    },
+    "oversized-rojana-ek-ghanta": {
+      "name": "Rojana Ek Ghanta",
+      "price": 749
+    },
+    "oversized-ghost-compass": {
+      "name": "Ghost Compass",
+      "price": 699
+    },
+    "oversized-not-fast-just-furious": {
+      "name": "Not Fast Just Furious",
+      "price": 649
+    },
+    "oversized-unleash-the-beast": {
+      "name": "Unleash The Beast",
+      "price": 649
+    },
+    "oversized-wild-instinct": {
+      "name": "Wild Instinct",
+      "price": 649
+    },
+    "oversized-edge-01": {
+      "name": "EDGE 01",
+      "price": 599
+    },
+    "oversized-after-hours": {
+      "name": "AFTER HOURS",
+      "price": 699
+    },
+    "oversized-lost-found": {
+      "name": "LOST / FOUND",
+      "price": 699
+    },
+    "oversized-odisha-20n": {
+      "name": "ODISHA 20°N",
+      "price": 749
+    }
+  }
+}

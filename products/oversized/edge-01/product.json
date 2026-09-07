@@ -1,7 +1,5 @@
 {
   "name": "EDGE-01 Oversized Tee",
-  "price": 549,
-  "compareAt": 699,
   "badge": "CORE",
   "fit": "Oversized",
   "gsm": "220 GSM",
@@ -18,12 +16,12 @@
     {
       "name": "Black",
       "hex": "#111111",
-      "image": "008-black-model-front.png"
+      "image": "008-black-model-front.webp"
     },
     {
       "name": "Cream",
       "hex": "#efe3ca",
-      "image": "004-cream-front.png"
+      "image": "004-cream-front.webp"
     }
   ],
   "collection": "ESSENTIALS",
@@ -31,14 +29,14 @@
   "featured": true,
   "sort": 5,
   "images": [
-    "008-black-model-front.png",
-    "002-black-front.png",
-    "003-black-back.png",
-    "004-cream-front.png",
-    "005-cream-back.png",
-    "006-black-front-details.png",
-    "007-black-back-detail.png",
-    "008-neck-label.png",
+    "008-black-model-front.webp",
+    "002-black-front.webp",
+    "003-black-back.webp",
+    "004-cream-front.webp",
+    "005-cream-back.webp",
+    "006-black-front-details.webp",
+    "007-black-back-detail.webp",
+    "008-neck-label.webp",
     "001-cover.png"
   ]
 }

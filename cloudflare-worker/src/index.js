@@ -1,4 +1,4 @@
-import { PRODUCTS } from './catalog.js';
+import { PRODUCTS, PREPAID_DISCOUNT, PREPAID_COUPON_CODE } from './catalog.js';
 
 const SIZES = new Set(['S','M','L','XL']);
 const ADMIN_STATUSES = new Set([
@@ -165,7 +165,7 @@ function price(order,env){
   const prepaid=order.payment_method==='Prepaid';
   if(!prepaid && order.payment_method!=='Cash on Delivery') throw Error('Invalid payment method');
 
-  const discount=prepaid ? Math.min(Number(env.PREPAID_DISCOUNT||50),subtotal) : 0;
+  const discount=prepaid ? Math.min(Number(PREPAID_DISCOUNT||0),subtotal) : 0;
   const freeAbove=Number(env.FREE_SHIPPING_ABOVE||799);
   const freeShipping=subtotal>=freeAbove;
 

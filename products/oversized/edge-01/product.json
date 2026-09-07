@@ -16,12 +16,12 @@
     {
       "name": "Black",
       "hex": "#111111",
-      "image": "008-black-model-front.webp"
+      "image": "008-black-model-front.png"
     },
     {
       "name": "Cream",
       "hex": "#efe3ca",
-      "image": "004-cream-front.webp"
+      "image": "004-cream-front.png"
     }
   ],
   "collection": "ESSENTIALS",
@@ -29,14 +29,14 @@
   "featured": true,
   "sort": 5,
   "images": [
-    "008-black-model-front.webp",
-    "002-black-front.webp",
-    "003-black-back.webp",
-    "004-cream-front.webp",
-    "005-cream-back.webp",
-    "006-black-front-details.webp",
-    "007-black-back-detail.webp",
-    "008-neck-label.webp",
+    "008-black-model-front.png",
+    "002-black-front.png",
+    "003-black-back.png",
+    "004-cream-front.png",
+    "005-cream-back.png",
+    "006-black-front-details.png",
+    "007-black-back-detail.png",
+    "008-neck-label.png",
     "001-cover.png"
   ],
   "cardImage": "001-cover.png",

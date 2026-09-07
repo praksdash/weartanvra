@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded',()=>{
      const free=p.price>=Number(TANVRA_CONFIG.shipping?.freeAbove||799);
      return `<article class="product-card" data-card="${esc(p.id)}">
        <a class="product-card-link" href="product.html?id=${encodeURIComponent(p.id)}">
-         <div class="product-image"><span class="card-badge">${esc(p.badge)}</span><img src="${esc(p.images[0])}" alt="${esc(p.name)}" loading="lazy" decoding="async"></div>
+         <div class="product-image"><span class="card-badge">${esc(p.badge)}</span><img src="${esc(p.cardImage||p.images[0])}" alt="${esc(p.name)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='assets/wear-tanvra-logo.webp';this.classList.add('image-fallback')"></div>
          <div class="product-meta"><h3>${esc(p.name)}</h3><p>${esc(p.subtitle)}</p><div class="launch-price"><span>${esc(window.TANVRA_PRICING?.priceLabel||'LAUNCH PRICE')}</span><strong>${TanvraStore.money(p.price)}</strong></div></div>
        </a>
        <div class="card-actions"><a class="btn card-view" href="product.html?id=${encodeURIComponent(p.id)}">VIEW PRODUCT</a></div>

@@ -38,5 +38,7 @@
     "007-black-back-detail.webp",
     "008-neck-label.webp",
     "001-cover.png"
-  ]
+  ],
+  "cardImage": "001-cover.png",
+  "heroImage": "001-cover.png"
 }

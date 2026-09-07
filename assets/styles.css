@@ -1181,3 +1181,51 @@
 .sale-badge{
   display:none!important;
 }
+
+/* =========================================================
+   v20 — EDGE 01 reliable cover + desktop product balance
+   ========================================================= */
+.product-image .image-fallback{
+  object-fit:contain!important;
+  padding:18%!important;
+  background:#f1eee7!important;
+}
+@media(min-width:1201px){
+  .product-layout{
+    grid-template-columns:minmax(0,1.03fr) minmax(420px,.82fr)!important;
+    gap:54px!important;
+    align-items:start!important;
+  }
+  .main-product-image{
+    height:min(68vh,680px)!important;
+    min-height:540px!important;
+    aspect-ratio:auto!important;
+    background:#f1eee7!important;
+    overflow:hidden!important;
+  }
+  .main-product-image img{
+    width:100%!important;
+    height:100%!important;
+    object-fit:contain!important;
+    object-position:center!important;
+  }
+  .product-info{
+    position:sticky!important;
+    top:112px!important;
+    padding-top:4px!important;
+  }
+  .product-info h1{
+    font-size:clamp(44px,4.1vw,68px)!important;
+    line-height:.94!important;
+    margin-bottom:14px!important;
+  }
+  .launch-price-product{
+    margin:12px 0 8px!important;
+  }
+  .product-cta{
+    margin-top:18px!important;
+  }
+}
+@media(max-width:1200px){
+  .main-product-image img{object-fit:contain!important;background:#f1eee7!important}
+}

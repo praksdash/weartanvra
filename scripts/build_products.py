@@ -63,6 +63,13 @@ def build():
    price_value=price_entry.get('price') if isinstance(price_entry,dict) else price_entry
    if not isinstance(price_value,(int,float)) or int(price_value)<=0:
     raise SystemExit(f'Invalid price in pricing.json for {pid}')
+   def norm_asset(v):
+    if not v: return None
+    v=str(v)
+    if v.startswith('http://') or v.startswith('https://'): return v
+    return rel(folder/v) if '/' not in v else v
+   card_image=norm_asset(meta.get('cardImage')) or paths[0]
+   hero_image=norm_asset(meta.get('heroImage')) or card_image or paths[0]
    prod={
     'id':pid,'slug':slug,'category':cat,
     'name':meta.get('name') or f"{title(slug)} {'Oversized Tee' if cat=='oversized' else 'Regular Tee'}",
@@ -72,7 +79,7 @@ def build():
     'badge':meta.get('badge',d['badge']),'fit':meta.get('fit',d['fit']),'gsm':meta.get('gsm',d['gsm']),
     'material':meta.get('material',d['material']),'print':meta.get('print','Graphic print'),
     'description':meta.get('description') or f"{title(slug)} from WEAR TANVRA.",
-    'sizes':meta.get('sizes',d['sizes']),'colors':norm,'images':paths,
+    'sizes':meta.get('sizes',d['sizes']),'colors':norm,'images':paths,'cardImage':card_image,'heroImage':hero_image,
     'featured':bool(meta.get('featured',False)),'sort':int(meta.get('sort',100)),'collection':meta.get('collection','GRAPHIC DROP' if cat=='oversized' else 'ESSENTIALS'),'printTier':meta.get('printTier','GRAPHIC')
    }
    products.append(prod)

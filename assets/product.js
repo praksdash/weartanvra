@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  let color=p.colors?.[0]?.name||'As Shown',size=p.sizes?.[0]||'M',active=0;
  const threshold=Number(TANVRA_CONFIG.shipping?.freeAbove||799),free=p.price>=threshold;
  root.innerHTML=`<div class="product-layout">
- <section><div class="main-product-image"><img data-main-image src="${esc((p.colors?.[0]?.image)||p.images[0])}" alt="${esc(p.name)}"></div><div class="thumbs">${p.images.map((im,i)=>`<button class="thumb ${i===0?'active':''}" data-thumb="${i}"><img src="${esc(im)}" alt="${esc(p.name)} view ${i+1}" onerror="this.closest('button').hidden=true"></button>`).join('')}</div></section>
+ <section><div class="main-product-image"><img data-main-image src="${esc(p.heroImage||p.cardImage||(p.colors?.[0]?.image)||p.images[0])}" alt="${esc(p.name)}"></div><div class="thumbs">${p.images.map((im,i)=>`<button class="thumb ${i===0?'active':''}" data-thumb="${i}"><img src="${esc(im)}" alt="${esc(p.name)} view ${i+1}" onerror="this.closest('button').hidden=true"></button>`).join('')}</div></section>
  <section class="product-info"><p class="eyebrow">${esc(p.badge)}</p><h1>${esc(p.name)}</h1><p class="product-subtitle">${esc(p.subtitle)}</p>
  <div class="launch-price launch-price-product"><span>${esc(window.TANVRA_PRICING?.priceLabel||'LAUNCH PRICE')}</span><strong>${TanvraStore.money(p.price)}</strong></div>
  <div class="price-note">MRP inclusive of applicable taxes. ${free?'<strong>FREE SHIPPING</strong> on this product.':`Free shipping on orders ₹${threshold}+.`}</div>
@@ -92,6 +92,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  <div class="product-accordions"><details open><summary>PRODUCT DETAILS</summary><p>${esc(p.gsm)} • ${esc(p.material)} • ${esc(p.fit)} fit. Print: ${esc(p.print)}.</p></details><details><summary>FIT & SIZE</summary><p>Use the size guide for garment measurements.</p></details><details><summary>DELIVERY</summary><p>India-wide delivery. See our shipping policy for current estimates.</p></details><details><summary>RETURNS & CARE</summary><p>See Returns & Damage for eligibility and garment care guidance.</p></details></div></section></div><div class="mobile-buybar"><div class="mobile-price"><span>${esc(p.name)}</span><strong>${TanvraStore.money(p.price)}</strong></div><button class="btn dark" data-mobile-add>ADD TO BAG</button></div></section></div>`;
  const main=root.querySelector('[data-main-image]');
  const imageCandidates=[
+   p.heroImage,
+   p.cardImage,
    ...(p.colors||[]).map(c=>c.image).filter(Boolean),
    ...(p.images||[])
  ].filter((v,i,a)=>v&&a.indexOf(v)===i);

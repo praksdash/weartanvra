@@ -1,5 +1,5 @@
 {
-  "name": "EDGE-01 Oversized Tee",
+  "name": "LOST / FOUND",
   "badge": "CORE",
   "fit": "Oversized",
   "gsm": "220 GSM",
@@ -14,14 +14,9 @@
   ],
   "colors": [
     {
-      "name": "Black",
-      "hex": "#111111",
-      "image": "002-black-front.png"
-    },
-    {
       "name": "Cream",
       "hex": "#efe3ca",
-      "image": "004-cream-front.png"
+      "image": "001-cover-page"
     }
   ],
   "collection": "ESSENTIALS",
@@ -29,14 +24,12 @@
   "featured": true,
   "sort": 5,
   "images": [
-    "001-cover.png",
-    "002-black-front.png",
-    "003-black-back.png",
-    "004-cream-front.png",
-    "005-cream-back.png",
-    "006-front-details.png",
-    "007-back-details.png",
-    "008-black-model-front.png",
-    "009-black-model-back.png"
+    "001-cover-page",
+    "002-cream-front",
+    "003-cream-back",
+    "004-cream-model-front",
+    "005-cream-model-back",
+    "006-front-details",
+    "007-neck-label"
   ]
 }

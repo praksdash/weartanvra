@@ -1,5 +1,5 @@
 {
-  "name": "EDGE-01 Oversized Tee",
+  "name": "AFTER HOURS",
   "badge": "CORE",
   "fit": "Oversized",
   "gsm": "220 GSM",
@@ -16,12 +16,7 @@
     {
       "name": "Black",
       "hex": "#111111",
-      "image": "002-black-front.png"
-    },
-    {
-      "name": "Cream",
-      "hex": "#efe3ca",
-      "image": "004-cream-front.png"
+      "image": "003-black-model-front.png"
     }
   ],
   "collection": "ESSENTIALS",
@@ -29,14 +24,10 @@
   "featured": true,
   "sort": 5,
   "images": [
-    "001-cover.png",
-    "002-black-front.png",
-    "003-black-back.png",
-    "004-cream-front.png",
-    "005-cream-back.png",
-    "006-front-details.png",
-    "007-back-details.png",
-    "008-black-model-front.png",
-    "009-black-model-back.png"
+    "000-cover-page.png",
+	"001-black-front.png",
+	"002-black-back.png",
+	"003-black-model-front.png",
+	"004-black-model-back.png"	
   ]
 }

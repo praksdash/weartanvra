@@ -43,6 +43,45 @@
     "printTier": "A3"
   },
   {
+    "id": "oversized-after-hours",
+    "slug": "after-hours",
+    "category": "oversized",
+    "name": "AFTER HOURS",
+    "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
+    "price": 699,
+    "compareAt": 699,
+    "badge": "CORE",
+    "fit": "Oversized",
+    "gsm": "220 GSM",
+    "material": "100% Cotton",
+    "print": "Minimal / no large graphic",
+    "description": "Built around the silhouette that defines modern streetwear. Heavyweight 220 GSM cotton with a relaxed oversized shape, soft hand-feel and everyday durability. Minimal by design, so the fit does the talking.",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Black",
+        "hex": "#111111",
+        "image": "products/oversized/after-hours/003-black-model-front.png"
+      }
+    ],
+    "images": [
+      "products/oversized/after-hours/000-cover-page.png",
+      "products/oversized/after-hours/001-black-front.png",
+      "products/oversized/after-hours/002-black-back.png",
+      "products/oversized/after-hours/003-black-model-front.png",
+      "products/oversized/after-hours/004-black-model-back.png"
+    ],
+    "featured": true,
+    "sort": 5,
+    "collection": "ESSENTIALS",
+    "printTier": "PLAIN"
+  },
+  {
     "id": "oversized-edge-01",
     "slug": "edge-01",
     "category": "oversized",
@@ -79,7 +118,59 @@
       "products/oversized/edge-01/002-black-front.png",
       "products/oversized/edge-01/003-black-back.png",
       "products/oversized/edge-01/004-cream-front.png",
-      "products/oversized/edge-01/005-cream-back.png"
+      "products/oversized/edge-01/005-cream-back.png",
+      "products/oversized/edge-01/006-front-details.png",
+      "products/oversized/edge-01/007-back-details.png",
+      "products/oversized/edge-01/008-black-model-front.png",
+      "products/oversized/edge-01/009-black-model-back.png"
+    ],
+    "featured": true,
+    "sort": 5,
+    "collection": "ESSENTIALS",
+    "printTier": "PLAIN"
+  },
+  {
+    "id": "oversized-lost-found",
+    "slug": "lost-found",
+    "category": "oversized",
+    "name": "LOST / FOUND",
+    "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
+    "price": 699,
+    "compareAt": 699,
+    "badge": "CORE",
+    "fit": "Oversized",
+    "gsm": "220 GSM",
+    "material": "100% Cotton",
+    "print": "Minimal / no large graphic",
+    "description": "Built around the silhouette that defines modern streetwear. Heavyweight 220 GSM cotton with a relaxed oversized shape, soft hand-feel and everyday durability. Minimal by design, so the fit does the talking.",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Cream",
+        "hex": "#efe3ca",
+        "image": "products/oversized/lost-found/001-cover-page"
+      }
+    ],
+    "images": [
+      "products/oversized/lost-found/001-cover-page",
+      "products/oversized/lost-found/002-cream-front",
+      "products/oversized/lost-found/003-cream-back",
+      "products/oversized/lost-found/004-cream-model-front",
+      "products/oversized/lost-found/005-cream-model-back",
+      "products/oversized/lost-found/006-front-details",
+      "products/oversized/lost-found/007-neck-label",
+      "products/oversized/lost-found/004-cream-model-front.png",
+      "products/oversized/lost-found/005-cream-model-back.png",
+      "products/oversized/lost-found/006-front-details.png",
+      "products/oversized/lost-found/001-cover-page.png",
+      "products/oversized/lost-found/002-cream-front.png",
+      "products/oversized/lost-found/003-cream-back.png",
+      "products/oversized/lost-found/007-neck-label.png"
     ],
     "featured": true,
     "sort": 5,

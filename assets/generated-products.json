@@ -157,19 +157,12 @@
       }
     ],
     "images": [
-      "products/oversized/lost-found/001-cover-page",
-      "products/oversized/lost-found/002-cream-front",
-      "products/oversized/lost-found/003-cream-back",
-      "products/oversized/lost-found/004-cream-model-front",
-      "products/oversized/lost-found/005-cream-model-back",
-      "products/oversized/lost-found/006-front-details",
-      "products/oversized/lost-found/007-neck-label",
-      "products/oversized/lost-found/004-cream-model-front.png",
-      "products/oversized/lost-found/005-cream-model-back.png",
-      "products/oversized/lost-found/006-front-details.png",
       "products/oversized/lost-found/001-cover-page.png",
       "products/oversized/lost-found/002-cream-front.png",
       "products/oversized/lost-found/003-cream-back.png",
+      "products/oversized/lost-found/004-cream-model-front.png",
+      "products/oversized/lost-found/005-cream-model-back.png",
+      "products/oversized/lost-found/006-front-details.png",
       "products/oversized/lost-found/007-neck-label.png"
     ],
     "featured": true,

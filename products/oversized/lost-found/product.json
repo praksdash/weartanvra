@@ -24,12 +24,12 @@
   "featured": true,
   "sort": 5,
   "images": [
-    "001-cover-page",
-    "002-cream-front",
-    "003-cream-back",
-    "004-cream-model-front",
-    "005-cream-model-back",
-    "006-front-details",
-    "007-neck-label"
+    "001-cover-page.png",
+    "002-cream-front.png",
+    "003-cream-back.png",
+    "004-cream-model-front.png",
+    "005-cream-model-back.png",
+    "006-front-details.png",
+    "007-neck-label.png"
   ]
 }

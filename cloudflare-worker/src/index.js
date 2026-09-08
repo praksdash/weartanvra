@@ -1,4 +1,4 @@
-import { PRODUCTS, PREPAID_DISCOUNT, PREPAID_COUPON_CODE } from './catalog.js';
+import { PRODUCTS, PRODUCT_VARIANTS, PREPAID_DISCOUNT, PREPAID_COUPON_CODE } from './catalog.js';
 
 const SIZES = new Set(['S','M','L','XL']);
 const ADMIN_STATUSES = new Set([
@@ -121,7 +121,7 @@ function headers(origin){
     'access-control-allow-origin':origin,
     'vary':'Origin',
     'access-control-allow-methods':'GET,POST,OPTIONS',
-    'access-control-allow-headers':'Content-Type,Authorization,X-Razorpay-Signature,X-Razorpay-Event-Id',
+    'access-control-allow-headers':'Content-Type,Authorization,X-File-Name,X-Razorpay-Signature,X-Razorpay-Event-Id',
     'cache-control':'no-store',
     ...securityHeaders()
   };
@@ -148,14 +148,16 @@ function price(order,env){
 
   for(const raw of order.items){
     const id=clean(raw.product_id,100);
-    const unit=PRODUCTS[id];
+    const unit=PRODUCTS[id],variant=PRODUCT_VARIANTS[id];
     const qty=Math.max(1,Math.min(10,Number(raw.qty)||1));
-    if(!unit) throw Error(`Unknown product: ${id}`);
-    if(!SIZES.has(clean(raw.size,4))) throw Error('Invalid size');
+    if(!unit||!variant) throw Error(`Unknown product: ${id}`);
+    const size=clean(raw.size,4),color=clean(raw.color,60);
+    if(!Array.isArray(variant.sizes)||!variant.sizes.includes(size)) throw Error('Invalid size');
+    if(!Array.isArray(variant.colors)||!variant.colors.includes(color)) throw Error('Invalid colour');
     items.push({
       product_id:id,
-      size:clean(raw.size,4),
-      color:clean(raw.color,60),
+      size,
+      color,
       qty,
       unit_price:unit
     });
@@ -216,6 +218,16 @@ function randomCode(){
   return String(a[0]%1000000).padStart(6,'0');
 }
 function randomToken(){ return `${crypto.randomUUID()}-${crypto.randomUUID()}`; }
+function checkoutRequestId(v){
+  const x=clean(v,100);
+  if(!/^[A-Za-z0-9_-]{16,100}$/.test(x)) throw Error('Invalid checkout request');
+  return x;
+}
+async function existingCheckout(env,requestId,method){
+  return await env.DB.prepare(`SELECT id,status,total,currency,razorpay_order_id,checkout_request_id FROM orders WHERE checkout_request_id=? AND payment_method=? AND environment=?`)
+    .bind(requestId,method,orderEnvironment(env)).first();
+}
+
 function isoPlusMinutes(n){ return new Date(Date.now()+n*60000).toISOString(); }
 function isoPlusDays(n){ return new Date(Date.now()+n*86400000).toISOString(); }
 function razorpayMode(env){
@@ -244,19 +256,19 @@ async function event(env,orderId,eventType,status=null,note=null){
   ).bind(orderId,eventType,status,note,now()).run();
 }
 
-async function insertOrder(env,id,method,status,customer,items,p,coupon){
+async function insertOrder(env,id,method,status,customer,items,p,coupon,requestId,statusTokenHash){
   assertStatusAllowed(method,status);
   const t=now(),environment=orderEnvironment(env);
   await env.DB.prepare(
     `INSERT INTO orders(
       id,payment_method,status,customer_json,items_json,customer_email,
       subtotal,discount,shipping,shipping_discount,total,currency,coupon,
-      environment,created_at,updated_at
-    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+      environment,checkout_request_id,status_token_hash,created_at,updated_at
+    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).bind(
     id,method,status,JSON.stringify(customer),JSON.stringify(items),normalEmail(customer.email),
     p.subtotal,p.discount,p.shipping,p.shippingIncludedDiscount,p.total,'INR',coupon||null,
-    environment,t,t
+    environment,requestId,statusTokenHash,t,t
   ).run();
   await event(env,id,'ORDER_CREATED',status,environment);
 }
@@ -771,12 +783,16 @@ export default {
       }
 
       if(req.method==='GET' && url.pathname==='/api/order-status'){
-        await enforceRateLimit(env,`order-status:${clientIp(req)}`,60,300);
+        await enforceRateLimit(env,`order-status:${clientIp(req)}`,30,300);
         const id=clean(url.searchParams.get('id'),100);
+        const auth=req.headers.get('Authorization')||'';
+        const token=auth.startsWith('Bearer ')?auth.slice(7):'';
+        if(!id||!token) return json({error:'Unauthorized'},401,origin);
+        const tokenHash=await sha256(token);
         const row=await env.DB.prepare(
-          `SELECT id,status,payment_method,total,currency,updated_at FROM orders WHERE id=?`
-        ).bind(id).first();
-        return row ? json(row,200,origin) : json({error:'Order not found'},404,origin);
+          `SELECT id,status,payment_method,total,currency,updated_at FROM orders WHERE id=? AND status_token_hash=?`
+        ).bind(id,tokenHash).first();
+        return row ? json(row,200,origin) : json({error:'Unauthorized'},401,origin);
       }
 
 
@@ -785,6 +801,11 @@ export default {
         requireAllowedOrigin(req,env);
         await enforceRateLimit(env,`auth-code-ip:${clientIp(req)}`,8,600);
         if(!env.AUTH_SECRET) return json({error:'Customer login is not configured'},503,origin);
+        if((crypto.getRandomValues(new Uint8Array(1))[0]&15)===0){
+          const t=now();
+          await env.DB.prepare(`DELETE FROM login_codes WHERE expires_at<?`).bind(t).run();
+          await env.DB.prepare(`DELETE FROM customer_sessions WHERE expires_at<?`).bind(t).run();
+        }
         const body=await readJson(req),email=normalEmail(body.email);
         await enforceRateLimit(env,`auth-code-email:${email}`,5,600);
         if(!validEmail(email)) throw Error('Enter a valid email address');
@@ -1100,9 +1121,26 @@ export default {
         const order=await readJson(req);
         validateCustomer(order.customer);
         if(order.payment_method!=='Prepaid') throw Error('Prepaid endpoint only');
+        const requestId=checkoutRequestId(order.checkout_request_id);
+        const prior=await existingCheckout(env,requestId,'Prepaid');
+        if(prior?.razorpay_order_id){
+          return json({
+            local_order_id:prior.id,razorpay_order_id:prior.razorpay_order_id,key_id:env.RAZORPAY_KEY_ID,
+            amount:Number(prior.total)*100,currency:prior.currency||'INR',receipt:prior.id,reused:true
+          },200,origin);
+        }
 
-        const p=price(order,env),id=ref('WTP');
-        await insertOrder(env,id,'Prepaid','PENDING_PAYMENT',order.customer,p.items,p,'PREPAID50');
+        const p=price(order,env),id=ref('WTP'),statusToken=randomToken(),statusTokenHash=await sha256(statusToken);
+        try{
+          await insertOrder(env,id,'Prepaid','PENDING_PAYMENT',order.customer,p.items,p,PREPAID_COUPON_CODE,requestId,statusTokenHash);
+        }catch(e){
+          const duplicate=await existingCheckout(env,requestId,'Prepaid');
+          if(duplicate?.razorpay_order_id){
+            return json({local_order_id:duplicate.id,razorpay_order_id:duplicate.razorpay_order_id,key_id:env.RAZORPAY_KEY_ID,amount:Number(duplicate.total)*100,currency:duplicate.currency||'INR',receipt:duplicate.id,reused:true},200,origin);
+          }
+          if(duplicate) return json({error:'Order creation is already in progress. Please retry.'},409,origin);
+          throw e;
+        }
 
         const rp=await fetch('https://api.razorpay.com/v1/orders',{
           method:'POST',
@@ -1114,7 +1152,7 @@ export default {
             amount:p.total*100,
             currency:'INR',
             receipt:id.slice(0,40),
-            notes:{local_order_id:id,coupon:'PREPAID50',source:'weartanvra.com'}
+            notes:{local_order_id:id,coupon:PREPAID_COUPON_CODE,source:'weartanvra.com'}
           })
         });
 
@@ -1135,7 +1173,8 @@ export default {
           amount:d.amount,
           currency:d.currency,
           receipt:id,
-          pricing:p
+          pricing:p,
+          status_token:statusToken
         },200,origin);
       }
 
@@ -1189,12 +1228,23 @@ export default {
         const order=await readJson(req);
         validateCustomer(order.customer);
         if(order.payment_method!=='Cash on Delivery') throw Error('COD endpoint only');
+        const requestId=checkoutRequestId(order.checkout_request_id);
+        const prior=await existingCheckout(env,requestId,'Cash on Delivery');
+        if(prior){
+          return json({accepted:true,order_id:prior.id,status:prior.status,pricing:{total:prior.total},reused:true},200,origin);
+        }
 
-        const p=price(order,env),id=ref('WTC');
-        await insertOrder(
-          env,id,'Cash on Delivery','COD_CONFIRMATION_REQUIRED',
-          order.customer,p.items,p,null
-        );
+        const p=price(order,env),id=ref('WTC'),statusToken=randomToken(),statusTokenHash=await sha256(statusToken);
+        try{
+          await insertOrder(
+            env,id,'Cash on Delivery','COD_CONFIRMATION_REQUIRED',
+            order.customer,p.items,p,null,requestId,statusTokenHash
+          );
+        }catch(e){
+          const duplicate=await existingCheckout(env,requestId,'Cash on Delivery');
+          if(duplicate) return json({accepted:true,order_id:duplicate.id,status:duplicate.status,pricing:{total:duplicate.total},reused:true},200,origin);
+          throw e;
+        }
 
         try{ await notifyOwner(env,id); }catch{}
         try{ await notifyCustomer(env,id); }catch{}
@@ -1203,7 +1253,8 @@ export default {
           accepted:true,
           order_id:id,
           status:'COD_CONFIRMATION_REQUIRED',
-          pricing:p
+          pricing:p,
+          status_token:statusToken
         },200,origin);
       }
 
@@ -1224,27 +1275,23 @@ export default {
           return json({error:'Invalid webhook signature'},400,origin);
 
         if(eventId){
-          const seen=await env.DB.prepare(
-            'SELECT event_id FROM webhook_events WHERE event_id=?'
-          ).bind(eventId).first();
-          if(seen) return json({ok:true,duplicate:true},200,origin);
+          await env.DB.prepare(`INSERT OR IGNORE INTO webhook_events(event_id,event_type,received_at) VALUES(?,?,?)`)
+            .bind(eventId,'PENDING',now()).run();
+          const seen=await env.DB.prepare('SELECT processed_at FROM webhook_events WHERE event_id=?').bind(eventId).first();
+          if(seen?.processed_at) return json({ok:true,duplicate:true},200,origin);
         }
 
         const evt=JSON.parse(raw);
         const type=clean(evt.event,100);
-        if(!new Set(['payment.captured','payment.failed','order.paid','refund.processed','refund.failed']).has(type))
+        if(!new Set(['payment.captured','payment.failed','order.paid','refund.processed','refund.failed']).has(type)){
+          if(eventId) await env.DB.prepare(`UPDATE webhook_events SET event_type=?,processed_at=?,processing_error=NULL WHERE event_id=?`).bind(type,now(),eventId).run();
           return json({ok:true,ignored:true},200,origin);
+        }
         const razorpayOrderId=
           evt?.payload?.payment?.entity?.order_id ||
           evt?.payload?.order?.entity?.id ||
           null;
         const paymentId=evt?.payload?.payment?.entity?.id||null;
-
-        if(eventId){
-          await env.DB.prepare(
-            'INSERT INTO webhook_events(event_id,event_type,received_at) VALUES(?,?,?)'
-          ).bind(eventId,type,now()).run();
-        }
 
         if(type==='refund.processed'||type==='refund.failed'){
           const refund=evt?.payload?.refund?.entity||{};
@@ -1260,6 +1307,7 @@ export default {
               try{await notifyReturnCustomer(env,rr.id)}catch{}
             }
           }
+          if(eventId) await env.DB.prepare(`UPDATE webhook_events SET event_type=?,processed_at=?,processing_error=NULL WHERE event_id=?`).bind(type,now(),eventId).run();
           return json({ok:true},200,origin);
         }
 
@@ -1270,7 +1318,13 @@ export default {
 
           if(row){
             if(type==='payment.captured'||type==='order.paid'){
-              if(row.payment_method!=='Prepaid') return json({ok:true,ignored:true},200,origin);
+              if(row.payment_method!=='Prepaid'){ if(eventId) await env.DB.prepare(`UPDATE webhook_events SET event_type=?,processed_at=?,processing_error=NULL WHERE event_id=?`).bind(type,now(),eventId).run(); return json({ok:true,ignored:true},200,origin); }
+              const paymentEntity=evt?.payload?.payment?.entity||null;
+              const orderEntity=evt?.payload?.order?.entity||null;
+              const paidAmount=paymentEntity?.amount ?? orderEntity?.amount_paid;
+              const paidCurrency=paymentEntity?.currency ?? orderEntity?.currency;
+              if(Number(paidAmount)!==Number(row.total)*100 || String(paidCurrency||'').toUpperCase()!=='INR')
+                return json({error:'Webhook payment amount mismatch'},409,origin);
               if(!['PAID','SENT_TO_TADDA','PRINTING','DISPATCHED','DELIVERED'].includes(row.status))
                 await updateStatus(env,row.id,'PAID',paymentId);
               try{ await notifyOwner(env,row.id); }catch{}
@@ -1282,14 +1336,21 @@ export default {
           }
         }
 
+        if(eventId) await env.DB.prepare(`UPDATE webhook_events SET event_type=?,processed_at=?,processing_error=NULL WHERE event_id=?`).bind(type,now(),eventId).run();
         return json({ok:true},200,origin);
       }
 
       return json({error:'Not found'},404,origin);
 
     }catch(e){
-      const status=Number(e?.status)||400;
-      return json({error:e?.message||'Bad request'},status,origin);
+      const message=String(e?.message||'');
+      if(message==='UNAUTHORIZED') return json({error:'Unauthorized'},401,origin);
+      const explicit=Number(e?.status);
+      if(explicit>=400&&explicit<500) return json({error:message||'Request failed'},explicit,origin);
+      const safe=/^(Missing |Cart is empty|Unknown product:|Invalid size|Invalid colour|Invalid payment method|Phone must|Pincode must|Enter a valid email|Prepaid endpoint only|COD endpoint only|Invalid status|Invalid return status|Choose |Please describe|Invalid checkout request|Order not found|Return request not found|Evidence |Maximum 4|This return request is closed)/.test(message);
+      if(safe) return json({error:message},400,origin);
+      console.error('WEAR TANVRA worker error',message);
+      return json({error:'Something went wrong. Please try again.'},500,origin);
     }
   }
 };

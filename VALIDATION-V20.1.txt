@@ -1,0 +1,11 @@
+TANVRA v20.1 HEADER/CART VALIDATION
+=======================================
+Logo links home: PASS
+Header says CART: PASS
+Hamburger binding: PASS
+Hamburger click listener: PASS
+Cart remove handler: PASS
+Cart remove styling: PASS
+v20.1 cache: PASS
+JS syntax: PASS
+Commerce/backend logic changed: NO

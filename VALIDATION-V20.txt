@@ -1,0 +1,10 @@
+TANVRA v20 MOBILE HEADER VALIDATION
+=====================================
+Header 68px: PASS
+Hamburger 48px target: PASS
+Logo 148px: PASS
+Bag/count gap: PASS
+Cart count selector: PASS
+v20 cache: PASS
+Desktop behavior preserved: PASS
+Commerce/backend logic changed: NO

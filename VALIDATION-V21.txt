@@ -1,0 +1,24 @@
+TANVRA v21.0 PRINCIPAL HARDENING VALIDATION
+============================================
+Product build from pricing.json: PASS
+Server product/size/colour validation: PASS
+Checkout idempotency key: PASS
+COD idempotency key: PASS
+Private order status token: PASS
+Razorpay verification amount/currency validation: PASS
+Razorpay webhook amount/currency validation: PASS
+Webhook retry-safe processed_at handling: PASS
+Return evidence CORS X-File-Name: PASS
+Internal error sanitization: PASS
+Expired auth cleanup: PASS
+D1 migration chain 0001-0009: PASS (SQLite syntax validation)
+GitHub release validator: PASS
+JavaScript syntax: PASS
+Python syntax: PASS
+Pricing remains server authoritative: PASS
+PREPAID50 remains ₹50: PASS
+
+WARNINGS / EXTERNAL CONFIG:
+- EDGE 01 image binaries are not bundled in this ZIP; preserve the live repo image files.
+- INVOICE_SELLER_ADDRESS is blank; invoice issue/download remains configuration-blocked until a real seller address is configured.
+- Live Razorpay, webhook, D1 remote and R2 smoke tests cannot be performed from this offline build environment.

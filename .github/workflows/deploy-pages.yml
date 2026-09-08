@@ -29,8 +29,15 @@ jobs:
         with:
           python-version: '3.x'
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Build product catalogue
         run: python scripts/build_products.py
+
+      - name: Validate release
+        run: python scripts/validate_release.py
 
       - name: Build public site artifact
         shell: bash

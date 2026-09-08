@@ -1,0 +1,13 @@
+TANVRA v19.9 HOMEPAGE MOBILE VALIDATION
+===========================================
+Core card mobile class: PASS
+Shop by style mobile section: PASS
+Point of view mobile section: PASS
+Mobile cards one column: PASS
+Overlay removed on phone: PASS
+POV grid one column: PASS
+POV CTA visible: PASS
+v19.9 cache: PASS
+JS syntax: PASS
+Desktop rules preserved: PASS
+Commerce/backend logic changed: NO

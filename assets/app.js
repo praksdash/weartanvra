@@ -7,36 +7,47 @@ document.addEventListener('DOMContentLoaded',()=>{
   const close=document.querySelector('[data-mobile-close]');
   const backdrop=document.querySelector('[data-mobile-backdrop]');
 
-  if(toggle&&nav){
-    const openMenu=()=>{
-      nav.classList.add('open');
-      nav.setAttribute('aria-hidden','false');
-      toggle.setAttribute('aria-expanded','true');
-      if(backdrop){backdrop.hidden=false;requestAnimationFrame(()=>backdrop.classList.add('open'))}
-      document.body.classList.add('nav-open');
-      close?.focus();
-    };
+  const setMenuState=(open)=>{
+    if(!toggle||!nav) return;
+    nav.classList.toggle('open',open);
+    nav.setAttribute('aria-hidden',open?'false':'true');
+    toggle.setAttribute('aria-expanded',open?'true':'false');
+    document.body.classList.toggle('nav-open',open);
 
-    const closeMenu=()=>{
-      nav.classList.remove('open');
-      nav.setAttribute('aria-hidden','true');
-      toggle.setAttribute('aria-expanded','false');
-      if(backdrop){
+    if(backdrop){
+      backdrop.hidden=!open;
+      if(open){
+        requestAnimationFrame(()=>backdrop.classList.add('open'));
+      }else{
         backdrop.classList.remove('open');
-        setTimeout(()=>{backdrop.hidden=true},180);
       }
-      document.body.classList.remove('nav-open');
-    };
+    }
+  };
 
-    toggle.addEventListener('click',()=>nav.classList.contains('open')?closeMenu():openMenu());
-    close?.addEventListener('click',closeMenu);
-    backdrop?.addEventListener('click',closeMenu);
+  if(toggle&&nav){
+    toggle.addEventListener('click',(e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      setMenuState(!nav.classList.contains('open'));
+    });
 
-    nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',closeMenu));
-    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&nav.classList.contains('open'))closeMenu()});
+    close?.addEventListener('click',(e)=>{
+      e.preventDefault();
+      setMenuState(false);
+    });
+
+    backdrop?.addEventListener('click',()=>setMenuState(false));
+
+    nav.querySelectorAll('a').forEach(a=>{
+      a.addEventListener('click',()=>setMenuState(false));
+    });
+
+    document.addEventListener('keydown',(e)=>{
+      if(e.key==='Escape') setMenuState(false);
+    });
 
     window.addEventListener('resize',()=>{
-      if(window.innerWidth>1200&&nav.classList.contains('open'))closeMenu();
+      if(window.innerWidth>1200) setMenuState(false);
     });
   }
 
@@ -67,5 +78,4 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
     }
   }
-
 });

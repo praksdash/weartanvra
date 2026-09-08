@@ -37,8 +37,6 @@
       "products/oversized/rojana-ek-ghanta/back-black-tee.webp",
       "products/oversized/rojana-ek-ghanta/back-white-tee.webp"
     ],
-    "cardImage": "products/oversized/rojana-ek-ghanta/front-black-tee.webp",
-    "heroImage": "products/oversized/rojana-ek-ghanta/front-black-tee.webp",
     "featured": true,
     "sort": 1,
     "collection": "ROJANA EK GHANTA",
@@ -50,8 +48,8 @@
     "category": "oversized",
     "name": "EDGE-01 Oversized Tee",
     "subtitle": "220 GSM • 100% Cotton • Oversized Fit",
-    "price": 549,
-    "compareAt": 549,
+    "price": 599,
+    "compareAt": 599,
     "badge": "CORE",
     "fit": "Oversized",
     "gsm": "220 GSM",
@@ -68,27 +66,25 @@
       {
         "name": "Black",
         "hex": "#111111",
-        "image": "products/oversized/edge-01/008-black-model-front.png"
+        "image": "products/oversized/edge-01/008-black-model-front.webp"
       },
       {
         "name": "Cream",
         "hex": "#efe3ca",
-        "image": "products/oversized/edge-01/004-cream-front.png"
+        "image": "products/oversized/edge-01/004-cream-front.webp"
       }
     ],
     "images": [
-      "products/oversized/edge-01/008-black-model-front.png",
-      "products/oversized/edge-01/002-black-front.png",
-      "products/oversized/edge-01/003-black-back.png",
-      "products/oversized/edge-01/004-cream-front.png",
-      "products/oversized/edge-01/005-cream-back.png",
-      "products/oversized/edge-01/006-black-front-details.png",
-      "products/oversized/edge-01/007-black-back-detail.png",
-      "products/oversized/edge-01/008-neck-label.png",
+      "products/oversized/edge-01/008-black-model-front.webp",
+      "products/oversized/edge-01/002-black-front.webp",
+      "products/oversized/edge-01/003-black-back.webp",
+      "products/oversized/edge-01/004-cream-front.webp",
+      "products/oversized/edge-01/005-cream-back.webp",
+      "products/oversized/edge-01/006-black-front-details.webp",
+      "products/oversized/edge-01/007-black-back-detail.webp",
+      "products/oversized/edge-01/008-neck-label.webp",
       "products/oversized/edge-01/001-cover.png"
     ],
-    "cardImage": "products/oversized/edge-01/001-cover.png",
-    "heroImage": "products/oversized/edge-01/001-cover.png",
     "featured": true,
     "sort": 5,
     "collection": "ESSENTIALS",
@@ -142,8 +138,6 @@
       "products/oversized/core-220/front-green.webp",
       "products/oversized/core-220/front-white.webp"
     ],
-    "cardImage": "products/oversized/core-220/front-beige.webp",
-    "heroImage": "products/oversized/core-220/front-beige.webp",
     "featured": false,
     "sort": 100,
     "collection": "ESSENTIALS",
@@ -197,8 +191,6 @@
       "products/oversized/ghost-compass/back-green.webp",
       "products/oversized/ghost-compass/back-white.webp"
     ],
-    "cardImage": "products/oversized/ghost-compass/back-beige.webp",
-    "heroImage": "products/oversized/ghost-compass/back-beige.webp",
     "featured": false,
     "sort": 100,
     "collection": "GRAPHIC DROP",
@@ -245,8 +237,6 @@
       "products/oversized/not-fast-just-furious/image-11.jpg",
       "products/oversized/not-fast-just-furious/image-12.jpg"
     ],
-    "cardImage": "products/oversized/not-fast-just-furious/image-01.jpg",
-    "heroImage": "products/oversized/not-fast-just-furious/image-01.jpg",
     "featured": false,
     "sort": 100,
     "collection": "GRAPHIC DROP",
@@ -293,8 +283,6 @@
       "products/oversized/unleash-the-beast/image-11.jpg",
       "products/oversized/unleash-the-beast/image-12.jpg"
     ],
-    "cardImage": "products/oversized/unleash-the-beast/image-01.jpg",
-    "heroImage": "products/oversized/unleash-the-beast/image-01.jpg",
     "featured": false,
     "sort": 100,
     "collection": "GRAPHIC DROP",
@@ -343,8 +331,6 @@
       "products/oversized/wild-instinct/front-green.webp",
       "products/oversized/wild-instinct/detail-green.webp"
     ],
-    "cardImage": "products/oversized/wild-instinct/front-black.webp",
-    "heroImage": "products/oversized/wild-instinct/front-black.webp",
     "featured": false,
     "sort": 100,
     "collection": "GRAPHIC DROP",

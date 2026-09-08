@@ -23,19 +23,19 @@
       {
         "name": "Black",
         "hex": "#111111",
-        "image": "products/oversized/rojana-ek-ghanta/front-black-tee.webp"
+        "image": "products/oversized/rojana-ek-ghanta/front-black-tee.png"
       },
       {
         "name": "White",
         "hex": "#f4f4f4",
-        "image": "products/oversized/rojana-ek-ghanta/front-white-tee.webp"
+        "image": "products/oversized/rojana-ek-ghanta/front-white-tee.png"
       }
     ],
     "images": [
-      "products/oversized/rojana-ek-ghanta/front-black-tee.webp",
-      "products/oversized/rojana-ek-ghanta/front-white-tee.webp",
-      "products/oversized/rojana-ek-ghanta/back-black-tee.webp",
-      "products/oversized/rojana-ek-ghanta/back-white-tee.webp"
+      "products/oversized/rojana-ek-ghanta/front-black-tee.png",
+      "products/oversized/rojana-ek-ghanta/front-white-tee.png",
+      "products/oversized/rojana-ek-ghanta/back-black-tee.png",
+      "products/oversized/rojana-ek-ghanta/back-white-tee.png"
     ],
     "featured": true,
     "sort": 1,
@@ -66,24 +66,20 @@
       {
         "name": "Black",
         "hex": "#111111",
-        "image": "products/oversized/edge-01/008-black-model-front.webp"
+        "image": "products/oversized/edge-01/002-black-front.png"
       },
       {
         "name": "Cream",
         "hex": "#efe3ca",
-        "image": "products/oversized/edge-01/004-cream-front.webp"
+        "image": "products/oversized/edge-01/004-cream-front.png"
       }
     ],
     "images": [
-      "products/oversized/edge-01/008-black-model-front.webp",
-      "products/oversized/edge-01/002-black-front.webp",
-      "products/oversized/edge-01/003-black-back.webp",
-      "products/oversized/edge-01/004-cream-front.webp",
-      "products/oversized/edge-01/005-cream-back.webp",
-      "products/oversized/edge-01/006-black-front-details.webp",
-      "products/oversized/edge-01/007-black-back-detail.webp",
-      "products/oversized/edge-01/008-neck-label.webp",
-      "products/oversized/edge-01/001-cover.png"
+      "products/oversized/edge-01/001-cover.png",
+      "products/oversized/edge-01/002-black-front.png",
+      "products/oversized/edge-01/003-black-back.png",
+      "products/oversized/edge-01/004-cream-front.png",
+      "products/oversized/edge-01/005-cream-back.png"
     ],
     "featured": true,
     "sort": 5,

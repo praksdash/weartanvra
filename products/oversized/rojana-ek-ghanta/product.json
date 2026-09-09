@@ -18,14 +18,15 @@
     {
       "name": "Black",
       "hex": "#111111",
-      "image": "front-black-tee.webp"
+      "image": "front-black-tee.png"
     },
     {
       "name": "White",
       "hex": "#f4f4f4",
-      "image": "front-white-tee.webp"
+      "image": "front-white-tee.png"
     }
   ],
   "collection": "ROJANA EK GHANTA",
-  "printTier": "A3"
+  "printTier": "A3",
+  "sort": 4
 }

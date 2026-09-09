@@ -1,6 +1,6 @@
 {
   "name": "Wild Instinct Oversized Tee",
-  "badge": "DROP 01",
+  "badge": "COLLECTIONS",
   "fit": "Oversized",
   "gsm": "220 GSM",
   "material": "100% Cotton",
@@ -30,5 +30,6 @@
     }
   ],
   "collection": "GRAPHIC DROP",
-  "printTier": "A4"
+  "printTier": "A4",
+  "sort": 9
 }

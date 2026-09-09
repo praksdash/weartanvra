@@ -1,6 +1,6 @@
 {
   "name": "Ghost Compass Oversized Tee",
-  "badge": "DROP 01",
+  "badge": "COLLECTIONS",
   "fit": "Oversized",
   "gsm": "220 GSM",
   "material": "100% Cotton",
@@ -34,6 +34,7 @@
       "image": "back-green.webp"
     }
   ],
+  "sort": 6,
   "collection": "GRAPHIC DROP",
   "printTier": "A2"
 }

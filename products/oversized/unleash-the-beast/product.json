@@ -1,6 +1,6 @@
 {
   "name": "Unleash The Beast Oversized Tee",
-  "badge": "DROP 01",
+  "badge": "COLLECTIONS",
   "fit": "Oversized",
   "gsm": "220 GSM",
   "material": "100% Cotton",
@@ -13,5 +13,6 @@
   ],
   "collection": "GRAPHIC DROP",
   "printTier": "A2",
-  "print": "Large back graphic"
+  "print": "Large back graphic",
+  "sort": 8
 }

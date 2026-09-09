@@ -1,6 +1,6 @@
 {
   "name": "Not Fast Just Furious Oversized Tee",
-  "badge": "DROP 01",
+  "badge": "COLLECTIONS",
   "fit": "Oversized",
   "gsm": "220 GSM",
   "material": "100% Cotton",
@@ -13,5 +13,6 @@
   ],
   "collection": "GRAPHIC DROP",
   "printTier": "A3",
-  "print": "Graphic print"
+  "print": "Graphic print",
+  "sort": 7
 }

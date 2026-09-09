@@ -4,6 +4,9 @@ window.TANVRA_CONFIG={
   supportEmail:"tanvra.in@zohomail.in",
   instagram:"https://instagram.com/weartanvra",
 
+  // Add your Meta Pixel ID here when available. Event hooks are already wired.
+  analytics:{metaPixelId:"1958507201498124"},
+
   // Keep prelaunch until Razorpay TEST setup is complete.
   checkoutMode:"razorpay",
   paymentBackendUrl:"https://weartanvra-payments.weartanvra.workers.dev",

@@ -1,11 +1,11 @@
 {
   "name": "EDGE-01 Oversized Tee",
-  "badge": "DROP 1",
+  "badge": "CORE",
   "fit": "Oversized",
   "gsm": "220 GSM",
   "material": "100% Cotton",
-  "print": "Minimal statement graphic",
-  "description": "The piece that defines TANVRA’s new direction. EDGE 01 combines heavyweight 220 GSM cotton with a relaxed oversized silhouette, clean proportions and restrained detailing. Minimal, confident and built for everyday rotation — designed to let the fit, fabric and attitude speak first.",
+  "print": "Minimal / no large graphic",
+  "description": "Built around the silhouette that defines modern streetwear. Heavyweight 220 GSM cotton with a relaxed oversized shape, soft hand-feel and everyday durability. Minimal by design, so the fit does the talking.",
   "sizes": [
     "S",
     "M",
@@ -16,27 +16,27 @@
     {
       "name": "Black",
       "hex": "#111111",
-      "image": "002-black-front.png"
+      "image": "008-black-model-front.webp"
     },
     {
       "name": "Cream",
       "hex": "#efe3ca",
-      "image": "004-cream-front.png"
+      "image": "004-cream-front.webp"
     }
   ],
-  "collection": "EDGE 01",
-  "printTier": "GRAPHIC",
+  "collection": "ESSENTIALS",
+  "printTier": "PLAIN",
   "featured": true,
-  "sort": 4,
+  "sort": 5,
   "images": [
-    "001-cover.png",
-    "002-black-front.png",
-    "003-black-back.png",
-    "004-cream-front.png",
-    "005-cream-back.png",
-    "006-front-details.png",
-    "007-back-details.png",
-    "008-black-model-front.png",
-    "009-black-model-back.png"
+    "008-black-model-front.webp",
+    "002-black-front.webp",
+    "003-black-back.webp",
+    "004-cream-front.webp",
+    "005-cream-back.webp",
+    "006-black-front-details.webp",
+    "007-black-back-detail.webp",
+    "008-neck-label.webp",
+    "001-cover.png"
   ]
 }

@@ -1,6 +1,6 @@
 # TANVRA v22.1 — Free Shipping ₹499+
 
-Free-shipping threshold changed from ₹799 to ₹499 across:
+Free-shipping threshold changed from ₹499 to ₹499 across:
 - storefront
 - checkout display
 - Cloudflare Worker authoritative order calculation

@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    if(q)ps=ps.filter(p=>(p.name+' '+p.subtitle+' '+p.badge).toLowerCase().includes(q));
    if(f!=='all')ps=ps.filter(p=>p.category===f);
    grid.innerHTML=ps.map(p=>{
-     const free=p.price>=Number(TANVRA_CONFIG.shipping?.freeAbove||799);
+     const free=p.price>=Number(TANVRA_CONFIG.shipping?.freeAbove||499);
      return `<article class="product-card" data-card="${esc(p.id)}">
        <a class="product-card-link" href="product.html?id=${encodeURIComponent(p.id)}">
          <div class="product-image"><span class="card-badge">${esc(p.badge)}</span><img src="${esc(p.images[0])}" alt="${esc(p.name)}" loading="lazy" decoding="async"></div>

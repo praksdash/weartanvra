@@ -31,7 +31,7 @@ The website intentionally ships in `prelaunch` mode. Follow `cloudflare-worker/R
 Customer-facing launch pricing for the current oversized catalogue is now:
 - MRP: ₹1,299
 - Sale price: ₹899
-- Free shipping when merchandise subtotal is ₹799 or more
+- Free shipping when merchandise subtotal is ₹499 or more
 - PREPAID50: extra ₹50 off prepaid orders
 
 Example single ₹899 tee:
@@ -65,8 +65,8 @@ The website remains in `prelaunch` checkout mode until Razorpay TEST setup is co
 
 Checkout now keeps the advertised product total stable.
 
-### Orders below ₹799
-Example COD on a ₹749 product:
+### Orders below ₹499
+Example COD on a ₹449 product:
 
 - Product total: ₹749
 - Shipping: ~~₹98~~
@@ -81,7 +81,7 @@ Example prepaid on a ₹749 product:
 - Shipping included: −₹68
 - Final payable: ₹699
 
-### Orders ₹799+
+### Orders ₹499+
 Shipping is shown simply as `FREE`.
 
 The same pricing rule is recalculated in the Cloudflare Worker so the browser and payment amount cannot disagree.

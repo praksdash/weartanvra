@@ -3,7 +3,7 @@ Products: 6
 HTML pages: 13
 JS files checked: 11
 Oversized MRP/Sale: ₹1299 / ₹899
-Free shipping threshold: ₹799
+Free shipping threshold: ₹499
 PREPAID50: ₹50
 Rojana Ek Ghanta T-shirt mockups: 4
 Shop Add to Bag + Checkout buttons: yes

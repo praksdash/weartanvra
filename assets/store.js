@@ -28,11 +28,11 @@ function money(n){return new Intl.NumberFormat('en-IN',{style:'currency',currenc
 function pricing(method='Prepaid'){
   const cfg=window.TANVRA_CONFIG||{},sub=subtotal(),prepaid=method==='Prepaid';
   const discount=prepaid?Math.min(Number(cfg.prepaidCoupon?.discount||50),sub):0;
-  const threshold=Number(cfg.shipping?.freeAbove||799);
+  const threshold=Number(cfg.shipping?.freeAbove||499);
   const freeShipping=sub>=threshold;
 
   // Shipping shown to the customer for transparency.
-  // For orders below ₹799, the normal shipping charge is displayed and then
+  // For orders below ₹499, the normal shipping charge is displayed and then
   // fully offset as "Shipping included", so it never increases the advertised total.
   let shipping=0;
   if(!freeShipping){

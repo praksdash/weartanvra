@@ -5,7 +5,7 @@
   "compatibility_date": "2026-09-01",
   "vars": {
     "ALLOWED_ORIGINS": "https://weartanvra.com,https://www.weartanvra.com",
-    "FREE_SHIPPING_ABOVE": "799",
+    "FREE_SHIPPING_ABOVE": "499",
     "PREPAID_SHIPPING_BELOW_THRESHOLD": "68",
     "COD_MINIMUM_BELOW_THRESHOLD": "98",
     "COD_PERCENT_BELOW_THRESHOLD": "2.3",

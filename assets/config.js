@@ -13,7 +13,7 @@ window.TANVRA_CONFIG={
 
   prepaidCoupon:window.TANVRA_PRICING?.prepaidCoupon||{code:"PREPAID50",discount:50},
 
-  // Customer shipping policy: FREE on merchandise subtotal >= ₹799.
+  // Customer shipping policy: FREE on merchandise subtotal >= 499.
   // Below threshold, use flat/minimum charges shown here.
   shipping:{
     freeAbove:499,

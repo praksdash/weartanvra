@@ -160,10 +160,10 @@
       }
     ],
     "images": [
-      "products/oversized/rojana-ek-ghanta/front-black-tee.png",
-      "products/oversized/rojana-ek-ghanta/front-white-tee.png",
       "products/oversized/rojana-ek-ghanta/back-black-tee.png",
-      "products/oversized/rojana-ek-ghanta/back-white-tee.png"
+      "products/oversized/rojana-ek-ghanta/back-white-tee.png",
+      "products/oversized/rojana-ek-ghanta/front-black-tee.png",
+      "products/oversized/rojana-ek-ghanta/front-white-tee.png"
     ],
     "featured": true,
     "sort": 4,

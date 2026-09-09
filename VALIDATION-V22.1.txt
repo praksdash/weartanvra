@@ -1,0 +1,8 @@
+TANVRA v22.1 FREE SHIPPING VALIDATION
+==========================================
+Frontend threshold ₹499: PASS
+Worker authoritative threshold ₹499: PASS
+Worker config threshold ₹499: PASS
+PREPAID50 changed: NO
+Product pricing changed: NO
+JavaScript syntax: PASS

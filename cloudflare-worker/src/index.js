@@ -168,7 +168,7 @@ function price(order,env){
   if(!prepaid && order.payment_method!=='Cash on Delivery') throw Error('Invalid payment method');
 
   const discount=prepaid ? Math.min(Number(PREPAID_DISCOUNT||0),subtotal) : 0;
-  const freeAbove=Number(env.FREE_SHIPPING_ABOVE||799);
+  const freeAbove=Number(env.FREE_SHIPPING_ABOVE||499);
   const freeShipping=subtotal>=freeAbove;
 
   let shipping=0;

@@ -5,7 +5,7 @@ window.TANVRA_CONFIG={
   instagram:"https://instagram.com/weartanvra",
 
   // Add your Meta Pixel ID here when available. Event hooks are already wired.
-  analytics:{metaPixelId:"1958507201498124"},
+  analytics:{metaPixelId:""},
 
   // Keep prelaunch until Razorpay TEST setup is complete.
   checkoutMode:"razorpay",
@@ -16,7 +16,7 @@ window.TANVRA_CONFIG={
   // Customer shipping policy: FREE on merchandise subtotal >= ₹799.
   // Below threshold, use flat/minimum charges shown here.
   shipping:{
-    freeAbove:799,
+    freeAbove:499,
     prepaidFlatBelowThreshold:68,
     codMinimumBelowThreshold:98,
     codPercentBelowThreshold:2.3

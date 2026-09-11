@@ -1596,3 +1596,77 @@
   .field input,.field textarea{width:100%!important;border-radius:0!important}
   .field-error{font-size:11px}
 }
+
+
+/* v26.1 — checkout cleanup only */
+.checkout-reassurance{
+  margin:0 0 16px;
+  padding:11px 13px;
+  border:1px solid #ded9d0;
+  background:#faf8f3;
+  color:#3f3b35;
+  font-size:12px;
+  line-height:1.45;
+}
+.checkout-reassurance span{padding:0 5px;color:#9a948b}
+.checkout-delivery-line{
+  margin:12px 0 0;
+  padding:0;
+  color:#625e57;
+  font-size:11px;
+  line-height:1.5;
+}
+.checkout-delivery-line span{padding:0 4px;color:#aaa49b}
+.checkout-box .payment-options{gap:10px}
+.checkout-box .payment-card{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  min-height:0!important;
+  padding:14px 15px!important;
+  border:1px solid #d8d8d8;
+  cursor:pointer;
+  background:#fff;
+}
+.checkout-box .payment-card:has(input:checked){
+  border:2px solid #111;
+  padding:13px 14px!important;
+  background:#faf8f3;
+}
+.checkout-box .payment-card input[type="radio"]{
+  appearance:none;
+  -webkit-appearance:none;
+  width:20px!important;
+  height:20px!important;
+  min-width:20px!important;
+  min-height:20px!important;
+  flex:0 0 20px;
+  border:1.5px solid #777;
+  border-radius:50%;
+  margin:0!important;
+  padding:0!important;
+  position:relative;
+  background:#fff;
+  box-shadow:none!important;
+  cursor:pointer;
+}
+.checkout-box .payment-card input[type="radio"]:checked{border-color:#111}
+.checkout-box .payment-card input[type="radio"]:checked::after{
+  content:"";
+  position:absolute;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#111;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+}
+.checkout-box .payment-card span{gap:3px}
+.checkout-box .payment-card b{font-size:11px;line-height:1.25}
+.checkout-box .payment-card small{font-size:11px;line-height:1.3}
+@media(max-width:700px){
+  .checkout-reassurance{margin-bottom:14px;padding:10px 12px;font-size:11px}
+  .checkout-box .payment-card{padding:13px 14px!important;gap:12px}
+  .checkout-box .payment-card:has(input:checked){padding:12px 13px!important}
+}

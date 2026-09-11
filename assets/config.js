@@ -5,7 +5,7 @@ window.TANVRA_CONFIG={
   instagram:"https://instagram.com/weartanvra",
 
   // Add your Meta Pixel ID here when available. Event hooks are already wired.
-  analytics:{metaPixelId:""},
+  analytics:{metaPixelId:"1055492107356995"},
 
   // Keep prelaunch until Razorpay TEST setup is complete.
   checkoutMode:"razorpay",

@@ -1577,3 +1577,22 @@
   .section{padding:28px 0!important}.page-title{font-size:44px!important;margin-bottom:18px!important}.form-grid,.payment-options{grid-template-columns:1fr!important}.field input,.field textarea,.field select{font-size:16px!important;min-height:48px!important}.payment-card{min-height:72px!important}.checkout-box .btn[data-pay-button]{min-height:56px!important;font-size:12px!important}.notice{font-size:12px!important;line-height:1.5!important}.footer{margin-bottom:74px}
 }
 @media(max-width:390px){.product-info-v22 h1{font-size:32px!important}.mobile-buybar-v22{grid-template-columns:.72fr 1.28fr!important}.mobile-buybar-v22 .btn{font-size:10px!important}.cart-item{grid-template-columns:82px minmax(0,1fr)!important}.cart-item img{width:82px!important;height:104px!important}}
+
+
+/* v24 — checkout validation */
+.field.has-error label{color:#a31717!important}
+.field input.is-invalid,.field textarea.is-invalid,.field select.is-invalid{
+  border-color:#c62828!important;
+  box-shadow:0 0 0 1px #c62828!important;
+  background:#fff7f7!important;
+}
+.field-error{display:block;color:#b42318;font-size:12px;line-height:1.35;margin-top:2px;font-weight:650}
+.field-error[hidden]{display:none!important}
+.field input.is-invalid:focus,.field textarea.is-invalid:focus{outline:2px solid #c62828!important;outline-offset:2px}
+.checkout-price-note{margin:14px 0 0;padding:12px 13px;background:#f5f2eb;color:#403d37;font-size:12px;line-height:1.5}
+@media(max-width:700px){
+  .checkout-box{border:0!important;padding:0!important}
+  .field{gap:6px!important}
+  .field input,.field textarea{width:100%!important;border-radius:0!important}
+  .field-error{font-size:11px}
+}

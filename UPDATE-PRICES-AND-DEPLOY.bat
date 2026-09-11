@@ -1,13 +1,13 @@
 @echo off
 setlocal
 cd /d %~dp0
-python scripts\build_products.py
-if errorlevel 1 exit /b 1
-python scripts\validate_release.py
-if errorlevel 1 exit /b 1
-git add pricing.json assets\generated-pricing.js assets\generated-products.js assets\generated-products.json cloudflare-worker\src\catalog.js
-git commit -m "Update TANVRA prices"
-git push origin master
+python scripts\build_products.py || exit /b 1
+python scripts\validate_release.py || exit /b 1
+git add -A
+git commit -m "Update TANVRA pricing" || echo No new commit needed.
+git push origin master || exit /b 1
 cd cloudflare-worker
-call npm run deploy
+npm run deploy || exit /b 1
+echo.
+echo TANVRA pricing and Worker deployment complete.
 pause

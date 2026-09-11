@@ -1,4 +1,4 @@
-import { PRODUCTS, PRODUCT_VARIANTS, PREPAID_DISCOUNT, PREPAID_COUPON_CODE } from './catalog.js';
+import { PRODUCTS, PRODUCT_VARIANTS } from './catalog.js';
 
 const SIZES = new Set(['S','M','L','XL']);
 const ADMIN_STATUSES = new Set([
@@ -142,32 +142,51 @@ function validateCustomer(c){
   if(!validEmail(c.email)) throw Error('Enter a valid email address');
 }
 
-function price(order,env){
+async function loadAuthoritativePricing(env){
+  const configured=clean(env.PRICING_URL||'',500);
+  const allowedOrigin=String(env.ALLOWED_ORIGINS||'').split(',').map(x=>x.trim()).filter(Boolean)[0];
+  const pricingUrl=configured || `${allowedOrigin||'https://weartanvra.com'}/pricing.json`;
+  let response;
+  try{
+    response=await fetch(pricingUrl,{headers:{'accept':'application/json'},cf:{cacheTtl:0,cacheEverything:false}});
+  }catch{
+    throw Object.assign(new Error('Checkout pricing is temporarily unavailable. Please try again.'),{status:503});
+  }
+  if(!response.ok) throw Object.assign(new Error('Checkout pricing is temporarily unavailable. Please try again.'),{status:503});
+  const data=await response.json().catch(()=>null);
+  if(!data || typeof data!=='object' || !data.products || typeof data.products!=='object')
+    throw Object.assign(new Error('Checkout pricing is temporarily unavailable. Please try again.'),{status:503});
+  const coupon=data.prepaidCoupon||{};
+  return {
+    products:data.products,
+    couponCode:clean(coupon.code||'PREPAID50',50),
+    prepaidDiscount:Math.max(0,Number(coupon.discount)||0)
+  };
+}
+
+async function price(order,env){
   if(!Array.isArray(order.items)||!order.items.length) throw Error('Cart is empty');
+  const livePricing=await loadAuthoritativePricing(env);
   let subtotal=0,items=[];
 
   for(const raw of order.items){
     const id=clean(raw.product_id,100);
-    const unit=PRODUCTS[id],variant=PRODUCT_VARIANTS[id];
+    const entry=livePricing.products[id];
+    const unit=Number(typeof entry==='object' ? entry?.price : entry);
+    const variant=PRODUCT_VARIANTS[id];
     const qty=Math.max(1,Math.min(10,Number(raw.qty)||1));
-    if(!unit||!variant) throw Error(`Unknown product: ${id}`);
+    if(!Number.isFinite(unit)||unit<=0||!variant) throw Error(`Unknown product: ${id}`);
     const size=clean(raw.size,4),color=clean(raw.color,60);
     if(!Array.isArray(variant.sizes)||!variant.sizes.includes(size)) throw Error('Invalid size');
     if(!Array.isArray(variant.colors)||!variant.colors.includes(color)) throw Error('Invalid colour');
-    items.push({
-      product_id:id,
-      size,
-      color,
-      qty,
-      unit_price:unit
-    });
+    items.push({product_id:id,size,color,qty,unit_price:unit});
     subtotal += unit*qty;
   }
 
   const prepaid=order.payment_method==='Prepaid';
   if(!prepaid && order.payment_method!=='Cash on Delivery') throw Error('Invalid payment method');
 
-  const discount=prepaid ? Math.min(Number(PREPAID_DISCOUNT||0),subtotal) : 0;
+  const discount=prepaid ? Math.min(livePricing.prepaidDiscount,subtotal) : 0;
   const freeAbove=Number(env.FREE_SHIPPING_ABOVE||499);
   const freeShipping=subtotal>=freeAbove;
 
@@ -186,10 +205,9 @@ function price(order,env){
 
   return {
     items,subtotal,discount,shipping,
-    shippingIncludedDiscount,
-    payableShipping,
-    freeShipping,
-    freeShippingThreshold:freeAbove,
+    shippingIncludedDiscount,payableShipping,
+    freeShipping,freeShippingThreshold:freeAbove,
+    couponCode:livePricing.couponCode,
     total:Math.max(0,subtotal-discount+payableShipping)
   };
 }
@@ -1130,9 +1148,9 @@ export default {
           },200,origin);
         }
 
-        const p=price(order,env),id=ref('WTP'),statusToken=randomToken(),statusTokenHash=await sha256(statusToken);
+        const p=await price(order,env),id=ref('WTP'),statusToken=randomToken(),statusTokenHash=await sha256(statusToken);
         try{
-          await insertOrder(env,id,'Prepaid','PENDING_PAYMENT',order.customer,p.items,p,PREPAID_COUPON_CODE,requestId,statusTokenHash);
+          await insertOrder(env,id,'Prepaid','PENDING_PAYMENT',order.customer,p.items,p,p.couponCode,requestId,statusTokenHash);
         }catch(e){
           const duplicate=await existingCheckout(env,requestId,'Prepaid');
           if(duplicate?.razorpay_order_id){
@@ -1152,7 +1170,7 @@ export default {
             amount:p.total*100,
             currency:'INR',
             receipt:id.slice(0,40),
-            notes:{local_order_id:id,coupon:PREPAID_COUPON_CODE,source:'weartanvra.com'}
+            notes:{local_order_id:id,coupon:p.couponCode,source:'weartanvra.com'}
           })
         });
 
@@ -1234,7 +1252,7 @@ export default {
           return json({accepted:true,order_id:prior.id,status:prior.status,pricing:{total:prior.total},reused:true},200,origin);
         }
 
-        const p=price(order,env),id=ref('WTC'),statusToken=randomToken(),statusTokenHash=await sha256(statusToken);
+        const p=await price(order,env),id=ref('WTC'),statusToken=randomToken(),statusTokenHash=await sha256(statusToken);
         try{
           await insertOrder(
             env,id,'Cash on Delivery','COD_CONFIRMATION_REQUIRED',
@@ -1347,7 +1365,7 @@ export default {
       if(message==='UNAUTHORIZED') return json({error:'Unauthorized'},401,origin);
       const explicit=Number(e?.status);
       if(explicit>=400&&explicit<500) return json({error:message||'Request failed'},explicit,origin);
-      const safe=/^(Missing |Cart is empty|Unknown product:|Invalid size|Invalid colour|Invalid payment method|Phone must|Pincode must|Enter a valid email|Prepaid endpoint only|COD endpoint only|Invalid status|Invalid return status|Choose |Please describe|Invalid checkout request|Order not found|Return request not found|Evidence |Maximum 4|This return request is closed)/.test(message);
+      const safe=/^(Missing |Cart is empty|Unknown product:|Invalid size|Invalid colour|Invalid payment method|Phone must|Pincode must|Enter a valid email|Prepaid endpoint only|COD endpoint only|Invalid status|Invalid return status|Choose |Please describe|Invalid checkout request|Order not found|Return request not found|Evidence |Maximum 4|This return request is closed|Checkout pricing is temporarily unavailable)/.test(message);
       if(safe) return json({error:message},400,origin);
       console.error('WEAR TANVRA worker error',message);
       return json({error:'Something went wrong. Please try again.'},500,origin);

@@ -24,6 +24,8 @@ def image_rank(p):
  return (rank,n)
 
 def build():
+ if not PRODUCTS.exists():
+  raise SystemExit('products/ folder is missing. Refusing to overwrite generated catalog. Restore the product folder, then run the build again.')
  pricing=json.loads(PRICING_FILE.read_text(encoding='utf-8'))
  price_map=pricing.get('products') or {}
  if not isinstance(price_map,dict): raise SystemExit('pricing.json products must be an object')

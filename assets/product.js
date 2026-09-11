@@ -13,7 +13,8 @@ function setProductSeo(p,id){
  const canonicalUrl=`${base}product.html?id=${encodeURIComponent(id)}`;
  const imagePath=(Array.isArray(p.images)&&p.images[0]) || (p.colors?.[0]?.image) || 'assets/wear-tanvra-logo.webp';
  const imageUrl=new URL(imagePath,base).href;
- const title=`${p.name} | TANVRA Clothing India`;
+ const specialTitles={'oversized-edge-01':'EDGE 01 Oversized T-Shirt | TANVRA','oversized-after-hours':'AFTER HOURS Oversized T-Shirt | TANVRA','oversized-lost-found':'LOST / FOUND Oversized T-Shirt | TANVRA'};
+ const title=specialTitles[id]||`${p.name} | TANVRA Clothing India`;
  const description=p.description || `${p.name} by TANVRA. Premium oversized streetwear with India-wide delivery.`;
  document.title=title;
  setMeta('meta[name="description"]','content',description);
@@ -68,12 +69,12 @@ document.addEventListener('DOMContentLoaded',()=>{
      <p class="size-error" data-size-error role="alert" aria-live="polite" hidden>Please select your size.</p>
    </div>
    <div class="product-cta product-cta-v22"><button type="button" class="btn dark full product-primary" data-add>ADD TO BAG — ${TanvraStore.money(p.price)}</button><button type="button" class="product-secondary" data-buy>BUY NOW</button></div>
-   <div class="product-trust" aria-label="Shopping benefits"><span>${esc(p.gsm)} Heavyweight Cotton</span><span>COD Available</span><span>Secure Payments</span><span>48h Damage Support</span><span>India-wide Delivery</span></div>
+   <div class="product-trust" aria-label="Shopping benefits"><span>${esc(p.gsm)} Heavyweight Cotton</span><span>COD Available</span><span>Secure Payments</span><span>48h Damage Support</span><span>India-wide Delivery</span></div><div class="delivery-brief"><strong>DISPATCH</strong><span>24–72 business hours</span><strong>DELIVERY</strong><span>Usually 3–7 business days after dispatch</span></div>
    <div class="prepaid-note"><strong>${esc(TANVRA_CONFIG.prepaidCoupon.code)}</strong> · Extra ${TanvraStore.money(TANVRA_CONFIG.prepaidCoupon.discount)} off prepaid</div>
    <section class="product-story"><p class="eyebrow">THE CONCEPT</p><p>${esc(p.description)}</p></section>
    <div class="product-accordions"><details><summary>PRODUCT DETAILS</summary><p>${esc(p.gsm)} · ${esc(p.material)} · ${esc(p.fit)} fit. Print: ${esc(p.print)}.</p></details><details><summary>DELIVERY</summary><p>India-wide delivery. See the shipping page for the current policy.</p></details><details><summary>RETURNS & DAMAGE</summary><p>Damage claims follow the current TANVRA returns policy. General wrong-size returns are not promised; use the size guide before ordering.</p></details></div>
  </section></div>
- <div class="mobile-buybar mobile-buybar-v22"><div class="mobile-price"><span>${esc(treatment.display)}</span><strong>${TanvraStore.money(p.price)}</strong></div><button type="button" class="btn dark" data-mobile-add>ADD TO BAG</button></div>`;
+ <div class="cart-toast" data-cart-toast hidden><span data-toast-copy>Added to cart.</span><a href="cart.html">VIEW CART</a></div><div class="mobile-buybar mobile-buybar-v22"><div class="mobile-price"><span>${esc(treatment.display)}</span><strong>${TanvraStore.money(p.price)}</strong></div><button type="button" class="btn dark" data-mobile-add>ADD TO BAG</button></div>`;
 
  const carousel=root.querySelector('[data-carousel]'),dots=[...root.querySelectorAll('[data-dot]')],slides=[...root.querySelectorAll('.product-slide')];
  function goTo(i){const slide=slides[i];if(!slide)return;carousel.scrollTo({left:slide.offsetLeft,behavior:'smooth'})}
@@ -82,7 +83,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  root.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{color=b.dataset.color;root.querySelector('[data-color-name]').textContent=color;root.querySelectorAll('[data-color]').forEach(x=>x.classList.toggle('active',x===b));const idx=gallery.findIndex(x=>x===b.dataset.image||x.endsWith('/'+String(b.dataset.image).split('/').pop()));if(idx>=0)goTo(idx)});
  root.querySelectorAll('[data-size]').forEach(b=>b.onclick=()=>{size=b.dataset.size;root.querySelectorAll('[data-size]').forEach(x=>x.classList.toggle('active',x===b));const err=root.querySelector('[data-size-error]');err.hidden=true});
  function ensureSize(){if(size)return true;const err=root.querySelector('[data-size-error]');err.hidden=false;root.querySelector('.size-heading')?.scrollIntoView({behavior:'smooth',block:'center'});return false}
- function add(){if(!ensureSize())return false;TanvraStore.add({productId:p.id,size,color,qty:1});TanvraAnalytics?.addToCart?.(p,1);return true}
+ function add(){if(!ensureSize())return false;TanvraStore.add({productId:p.id,size,color,qty:1});TanvraAnalytics?.addToCart?.(p,1);const toast=root.querySelector('[data-cart-toast]');if(toast){toast.hidden=false;toast.querySelector('[data-toast-copy]').textContent=`${treatment.display} · ${color} · ${size} added to cart.`;setTimeout(()=>toast.hidden=true,3500)}return true}
  function flash(btn,label){btn.textContent='ADDED ✓';setTimeout(()=>btn.textContent=label,1100)}
  root.querySelector('[data-add]').onclick=()=>{if(add())flash(root.querySelector('[data-add]'),`ADD TO BAG — ${TanvraStore.money(p.price)}`)};
  root.querySelector('[data-mobile-add]').onclick=()=>{if(add())flash(root.querySelector('[data-mobile-add]'),'ADD TO BAG')};

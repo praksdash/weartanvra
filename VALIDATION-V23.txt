@@ -1,0 +1,10 @@
+TANVRA v23 validation
+- pricing.json -> generated frontend prices: PASS
+- pricing.json -> Worker catalog prices: PASS
+- PREPAID50 preserved: PASS
+- Razorpay authoritative amount reconciliation: PASS
+- master/main workflow trigger: PASS
+- missing products/ build safety: PASS
+- JavaScript syntax: PASS
+- Python syntax: PASS
+- Mobile product/cart/checkout override: PASS

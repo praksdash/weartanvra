@@ -1,0 +1,16 @@
+TANVRA v26.3 POLO CATALOG VALIDATION
+====================================
+Canonical product id: regular-core-polo
+Pricing entry ₹649: PASS
+Frontend generated product: PASS
+Frontend generated price: PASS
+Worker PRODUCTS catalog: PASS
+Worker PRODUCT_VARIANTS sizes S/M/L/XL: PASS
+Worker PRODUCT_VARIANTS colors Black/White: PASS
+Product source folder present: PASS
+POLO image count: 8
+PREPAID50 unchanged: PASS
+Existing product generated metadata changed: NO
+Release validator: 0 errors
+
+Note: invoice seller address warning is unrelated to this POLO fix.

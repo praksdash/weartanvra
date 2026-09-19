@@ -11,6 +11,6 @@
     "predeploy": "python ../scripts/build_products.py && python ../scripts/validate_release.py"
   },
   "devDependencies": {
-    "wrangler": "^4.0.0"
+    "wrangler": "^4.135.0"
   }
 }

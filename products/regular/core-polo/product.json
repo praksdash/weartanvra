@@ -1,0 +1,41 @@
+{
+  "name": "POLO",
+  "badge": "CORE",
+  "fit": "Regular",
+  "gsm": "220 GSM",
+  "material": "100% Cotton",
+  "print": "Minimal statement graphic",
+  "description": "100% Cotton | 220 GSM",
+  "sizes": [
+    "S",
+    "M",
+    "L",
+    "XL"
+  ],
+  "colors": [
+    {
+      "name": "Black",
+      "hex": "#000000",
+      "image": "03_black_model_front.png"
+    },
+	{
+      "name": "White",
+      "hex": "#ffffff",
+      "image": "07_white_model_front.png"
+    }
+  ],
+  "collection": "CORE",
+  "printTier": "GRAPHIC",
+  "featured": true,
+  "sort": 0,
+  "images": [
+    "01_black_product_front.png",
+    "02_black_product_back.png",
+    "03_black_model_front.png",
+    "04_black_model_back.png",
+    "05_white_product_front.png",
+    "06_white_product_back.png",
+    "07_white_model_front.png",
+    "08_white_model_back.png"
+  ]
+}

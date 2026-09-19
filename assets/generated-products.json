@@ -1,5 +1,52 @@
 [
   {
+    "id": "regular-core-polo",
+    "slug": "core-polo",
+    "category": "regular",
+    "name": "POLO",
+    "subtitle": "220 GSM • 100% Cotton • Regular Fit",
+    "price": 649,
+    "compareAt": 649,
+    "badge": "CORE",
+    "fit": "Regular",
+    "gsm": "220 GSM",
+    "material": "100% Cotton",
+    "print": "Minimal statement graphic",
+    "description": "100% Cotton | 220 GSM",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Black",
+        "hex": "#000000",
+        "image": "products/regular/core-polo/03_black_model_front.png"
+      },
+      {
+        "name": "White",
+        "hex": "#ffffff",
+        "image": "products/regular/core-polo/07_white_model_front.png"
+      }
+    ],
+    "images": [
+      "products/regular/core-polo/01_black_product_front.png",
+      "products/regular/core-polo/02_black_product_back.png",
+      "products/regular/core-polo/03_black_model_front.png",
+      "products/regular/core-polo/04_black_model_back.png",
+      "products/regular/core-polo/05_white_product_front.png",
+      "products/regular/core-polo/06_white_product_back.png",
+      "products/regular/core-polo/07_white_model_front.png",
+      "products/regular/core-polo/08_white_model_back.png"
+    ],
+    "featured": true,
+    "sort": 0,
+    "collection": "CORE",
+    "printTier": "GRAPHIC"
+  },
+  {
     "id": "oversized-edge-01",
     "slug": "edge-01",
     "category": "oversized",

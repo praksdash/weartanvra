@@ -1691,3 +1691,25 @@
   .product-layout-v27{display:block!important}.product-info-v27{position:static!important;padding:14px 16px 104px!important}.review-inline{margin-bottom:8px}.prepaid-promo{margin-top:12px}.quantity-row{align-items:center}.delivery-timeline{border-radius:12px}.product-quality-grid{grid-template-columns:1fr}.inline-track-form,.tracking-form{grid-template-columns:1fr}.reviews-heading{align-items:flex-start;flex-direction:column}.tracking-progress{grid-template-columns:1fr;gap:0;margin:18px 0}.tracking-step{display:grid;grid-template-columns:30px 1fr;text-align:left;align-items:center;min-height:44px}.tracking-step:not(:last-child)::after{left:12px;right:auto;top:31px;bottom:-13px;width:1px;height:auto}.tracking-result-meta{flex-direction:column;gap:7px}.whatsapp-support{right:14px;bottom:82px}.size-guide-dialog,.review-dialog{padding:24px 18px}.review-summary-card{align-items:flex-start;flex-direction:column}}
 @media(max-width:520px){
   .prepaid-promo{align-items:flex-start;flex-direction:column;gap:4px}.quantity-control{grid-template-columns:42px 48px 42px}.delivery-timeline{padding:15px}.delivery-timeline-head{flex-direction:column}.delivery-timeline-head small{text-align:left}.product-quality-grid article{grid-template-columns:50px 1fr;padding:15px}.quality-mark{width:44px;height:44px}.tracking-card{padding:18px}.review-card-head{align-items:flex-start;flex-direction:column;gap:6px}.size-guide-dialog h2,.review-dialog h2{font-size:28px}}
+
+
+/* v27.1 — product-specific supplier size charts */
+.size-guide-note{margin:16px 0 0;color:#5e5952;line-height:1.6;max-width:680px}
+.size-guide-page .lead{max-width:760px;color:#5e5952;line-height:1.65;margin-bottom:34px}
+.size-guide-section{padding:28px 0;border-top:1px solid #d9d5ce}
+.size-guide-section:first-of-type{border-top:0}
+.size-guide-section h2{font-size:clamp(24px,4vw,38px);margin:6px 0 18px}
+.regular-size-table .size-table{min-width:420px}
+.oversized-size-table .size-table{min-width:520px}
+.size-table{width:100%;border-collapse:collapse}
+.size-table th,.size-table td{border:1px solid #ddd8cf;padding:13px 12px;text-align:center}
+.size-table th{background:#f1efe9;font-size:11px;letter-spacing:.08em;font-weight:900}
+.size-table td:first-child{font-weight:900}
+@media(max-width:700px){
+  .size-guide-dialog{width:calc(100% - 20px);padding:22px 14px}
+  .size-guide-dialog h2{font-size:26px}
+  .size-table-wrap{margin-left:-2px;margin-right:-2px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .regular-size-table .size-table{min-width:360px}
+  .oversized-size-table .size-table{min-width:450px}
+  .size-table th,.size-table td{padding:11px 9px;font-size:13px}
+}

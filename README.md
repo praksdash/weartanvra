@@ -27,7 +27,7 @@ weartanvra/
 - Quantity +/- control.
 - Add to Cart and secondary Buy Now flow.
 - Sticky mobile purchase bar retained.
-- Size Guide modal with the current oversized garment measurements in inches.
+- Product-specific Size Guide modal with supplier Regular/Polo and Oversized/Relaxed Fit charts.
 - Dynamic estimated delivery timeline using the current 1–3 business-day dispatch and 3–7 business-day delivery policy.
 - Product Details, Returns & Damage, Shipping, Manufacturing & Quality and Track Order accordions.
 - Dedicated `track-order.html` page.

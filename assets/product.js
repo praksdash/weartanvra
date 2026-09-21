@@ -57,11 +57,25 @@ const PRODUCT_TREATMENT={
   'oversized-lost-found':{code:'TNV / 03',display:'LOST / FOUND',line:'Not every direction is a destination.'}
 };
 
+const REGULAR_MEASUREMENTS=[
+  ['XXS','32','22'],
+  ['XS','34','23.5'],
+  ['S','36','24'],
+  ['M','38','25'],
+  ['L','40','26'],
+  ['XL','42','27'],
+  ['XXL','44','29'],
+  ['XXXL','46','30']
+];
+
 const OVERSIZED_MEASUREMENTS=[
-  ['S','42','27.25','20.5','8.75'],
-  ['M','44','28.25','21','9.15'],
-  ['L','46','29.25','21.5','9.75'],
-  ['XL','48','30.25','22','10.15']
+  ['S','40','42','27'],
+  ['M','42','44','27.5'],
+  ['L','44','46','28'],
+  ['XL','46','48','28.5'],
+  ['2XL','48','50','29'],
+  ['3XL','50','52','29'],
+  ['4XL','52','54','30']
 ];
 
 function galleryFor(p){
@@ -94,11 +108,20 @@ function starText(rating){
 function backend(){return String(window.TANVRA_CONFIG?.paymentBackendUrl||'').replace(/\/$/,'')}
 
 function sizeGuideMarkup(p,esc){
-  if(String(p.fit||'').toLowerCase().includes('oversized')){
-    return `<p class="size-guide-advice">Designed as an oversized fit. Compare these garment measurements with a T-shirt you already own before ordering.</p>
-    <div class="size-table-wrap"><table class="size-table"><thead><tr><th>SIZE</th><th>CHEST</th><th>LENGTH</th><th>SHOULDER</th><th>SLEEVE</th></tr></thead><tbody>${OVERSIZED_MEASUREMENTS.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p class="micro">Measurements are in inches.</p>`;
+  const fit=String(p.fit||'').toLowerCase();
+  const isRegular=fit.includes('regular') || String(p.category||'').toLowerCase()==='regular';
+  if(isRegular){
+    return `<p class="size-guide-advice">Regular Fit / Polo supplier size chart. Measurements are shown exactly as supplied.</p>
+    <div class="size-table-wrap regular-size-table"><table class="size-table"><thead><tr><th>SIZE</th><th>WIDTH (IN)</th><th>LENGTH (IN)</th></tr></thead><tbody>${REGULAR_MEASUREMENTS.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <p class="size-guide-note"><strong>How to measure:</strong> Lay a well-fitting garment flat and compare the supplier measurements. Only sizes currently shown as selectable on this product page are available to order.</p>`;
   }
-  return `<p class="size-guide-advice">This product uses a ${esc(p.fit||'regular')} fit. Detailed garment measurements are not published in the current catalogue. Contact TANVRA before ordering if you need exact measurements.</p><a class="btn" href="size-guide.html">OPEN SIZE GUIDE</a>`;
+  if(fit.includes('oversized')){
+    return `<p class="size-guide-advice">Oversized / Relaxed Fit supplier size chart. Measurements are shown exactly as supplied.</p>
+    <div class="size-table-wrap oversized-size-table"><table class="size-table"><thead><tr><th>SIZE</th><th>CHEST</th><th>SHOULDER*</th><th>LENGTH</th></tr></thead><tbody>${OVERSIZED_MEASUREMENTS.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <p class="size-guide-note"><strong>Fit note:</strong> Choose your usual size for the intended relaxed/oversized silhouette. Only sizes currently shown as selectable on this product page are available to order.</p>
+    <p class="micro">*The column label and values are reproduced from the supplier chart.</p>`;
+  }
+  return `<p class="size-guide-advice">A detailed size chart is not published for this fit. Contact TANVRA before ordering if you need exact garment measurements.</p><a class="btn" href="size-guide.html">OPEN SIZE GUIDE</a>`;
 }
 
 function reviewMarkup(data,esc){
@@ -197,7 +220,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   <dialog class="size-guide-dialog" data-size-dialog aria-labelledby="size-guide-title">
     <button class="dialog-close" type="button" data-size-close aria-label="Close size guide">×</button>
-    <p class="eyebrow">SIZE GUIDE · FIND YOUR FIT</p><h2 id="size-guide-title">${esc(p.fit)} ${esc(p.category==='regular'?'TOP':'T-SHIRT')}</h2>${sizeGuideMarkup(p,esc)}
+    <p class="eyebrow">SIZE GUIDE · FIND YOUR FIT</p><h2 id="size-guide-title">${esc(String(p.fit||'').toLowerCase().includes('regular')?'REGULAR FIT / POLO':'OVERSIZED / RELAXED FIT')}</h2>${sizeGuideMarkup(p,esc)}
   </dialog>
 
   <div class="cart-toast" data-cart-toast hidden><span data-toast-copy>Added to cart.</span><a href="cart.html">VIEW CART</a></div>

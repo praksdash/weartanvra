@@ -78,4 +78,15 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
     }
   }
+
+  // Optional floating WhatsApp support button. It renders only when a real
+  // business number is configured in assets/config.js.
+  const wa=String(window.TANVRA_CONFIG?.whatsappNumber||'').replace(/\D/g,'');
+  if(/^\d{10,15}$/.test(wa) && !document.querySelector('[data-whatsapp-support]')){
+    const a=document.createElement('a');
+    a.className='whatsapp-support';a.dataset.whatsappSupport='1';a.target='_blank';a.rel='noopener';
+    a.href=`https://wa.me/${wa}?text=${encodeURIComponent('Hi TANVRA, I need help with an order/product.')}`;
+    a.setAttribute('aria-label','Chat with TANVRA on WhatsApp');a.textContent='WA';
+    document.body.appendChild(a);
+  }
 });

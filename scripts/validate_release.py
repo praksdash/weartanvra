@@ -12,12 +12,17 @@ for p in products:
     elif int(pv)!=int(p['price']): errors.append(f"Price mismatch: {p['id']}")
     if not p.get('sizes'): errors.append(f"No sizes: {p['id']}")
     if not p.get('colors'): errors.append(f"No colors: {p['id']}")
-    for img in p.get('images') or []:
-        if re.match(r'^https?://',img): continue
-        if not (ROOT/img).exists(): warnings.append(f"Image not bundled locally: {img}")
-for f in (ROOT/'products').rglob('product.json'):
-    d=json.loads(f.read_text(encoding='utf-8'))
-    if 'price' in d or 'compareAt' in d: errors.append(f"Price must only live in pricing.json: {f.relative_to(ROOT)}")
+    if (ROOT/'products').exists():
+        for img in p.get('images') or []:
+            if re.match(r'^https?://',img): continue
+            if not (ROOT/img).exists(): warnings.append(f"Image not bundled locally: {img}")
+products_root=ROOT/'products'
+if products_root.exists():
+    for f in products_root.rglob('product.json'):
+        d=json.loads(f.read_text(encoding='utf-8'))
+        if 'price' in d or 'compareAt' in d: errors.append(f"Price must only live in pricing.json: {f.relative_to(ROOT)}")
+else:
+    warnings.append('products/ is not bundled in this stripped package; generated catalog validation only. Restore products/ before rebuilding or deploying the Worker.')
 cat=(ROOT/'cloudflare-worker/src/catalog.js').read_text(encoding='utf-8')
 if 'PRODUCT_VARIANTS=' not in cat: errors.append('Worker PRODUCT_VARIANTS missing')
 if f'PREPAID_DISCOUNT={int(pricing["prepaidCoupon"]["discount"])};' not in cat: errors.append('Worker prepaid discount drift')

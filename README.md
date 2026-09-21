@@ -1,203 +1,139 @@
-# WEAR TANVRA Website v7
+# WEAR TANVRA — v27
 
-This is the full GitHub Pages storefront plus a separate secure Cloudflare Worker payment backend.
+Production storefront built with static HTML/CSS/JavaScript plus Cloudflare Workers, D1, R2, Razorpay and Resend.
 
-## Included
-- Rojana Ek Ghanta oversized product with front/back web previews.
-- Original transparent front/back PNG artwork under `products/oversized/rojana-ek-ghanta/print-ready/`.
-- Existing test/sample oversized products.
-- Automatic product-folder publishing for oversized and regular tees.
-- Shop search and fit filter.
-- Product gallery, colour/size selection and cart.
-- PREPAID50 automatic ₹50 discount.
-- Current checkout shipping formula: prepaid ₹68; COD ₹98 or 2.3% of merchandise subtotal, whichever is higher.
-- Secure Razorpay architecture with Cloudflare Worker + D1 persistent orders + webhook idempotency.
-- GitHub Actions deployment.
+## Important: product images/folders are intentionally omitted from this ZIP
 
-## Publish the website
-Replace your repository contents with this folder and push to `main`.
+The uploaded base package did not include `products/` to keep the ZIP small. Before running any product rebuild or Worker deploy, merge this package into your existing repository **without deleting your existing `products/` folder**.
 
-For first-time GitHub Pages setup: Repository → Settings → Pages → Source → GitHub Actions.
+Expected structure:
 
-## Add a product
-Create `products/oversized/my-product/` or `products/regular/my-product/`, copy images there and push. `product.json` is optional.
+```text
+weartanvra/
+├─ products/                    # keep your existing real product folders/images
+├─ assets/
+├─ scripts/
+├─ cloudflare-worker/
+├─ pricing.json
+└─ *.html
+```
 
-## Payment
-The website intentionally ships in `prelaunch` mode. Follow `cloudflare-worker/README.md`, use Razorpay TEST mode, then change `assets/config.js` only after the Worker is deployed.
+`build_products.py` deliberately refuses to rebuild when `products/` is missing so it cannot accidentally overwrite the generated catalogue with an empty one.
 
+## v27 product-page features
 
-# v8 update — pricing, free shipping, stronger shopping flow
+- Mobile-first product image carousel.
+- Size and colour selection.
+- Quantity +/- control.
+- Add to Cart and secondary Buy Now flow.
+- Sticky mobile purchase bar retained.
+- Size Guide modal with the current oversized garment measurements in inches.
+- Dynamic estimated delivery timeline using the current 1–3 business-day dispatch and 3–7 business-day delivery policy.
+- Product Details, Returns & Damage, Shipping, Manufacturing & Quality and Track Order accordions.
+- Dedicated `track-order.html` page.
+- Secure tracking lookup using order ID + matching checkout email.
+- Product-quality information cards.
+- Verified-purchase reviews stored in D1.
+- Review submission only from authenticated customer accounts after the order status is `DELIVERED`.
+- Public reviews never expose order IDs or customer emails.
+- Product schema can include aggregate review rating when reviews exist.
+- Optional WhatsApp support button through `assets/config.js`.
+- Optional countdown only when a real promotion deadline is configured; blank means hidden.
+- Existing Meta Pixel hooks retained.
 
-Customer-facing launch pricing for the current oversized catalogue is now:
-- MRP: ₹1,299
-- Sale price: ₹899
-- Free shipping when merchandise subtotal is ₹499 or more
-- PREPAID50: extra ₹50 off prepaid orders
+## Existing commerce features preserved
 
-Example single ₹899 tee:
-- COD: ₹899 total, shipping FREE
-- Prepaid: ₹849 total after PREPAID50, shipping FREE
+- Server-authoritative prices from `pricing.json`.
+- PREPAID50.
+- Free shipping from ₹499 merchandise subtotal.
+- Razorpay prepaid checkout and COD.
+- D1 orders and status history.
+- Customer passwordless account / My Orders.
+- Admin order operations.
+- Customer invoices.
+- Returns, R2 evidence and refunds.
+- Order emails through Resend.
+- Meta Pixel product funnel events.
 
-## Product cards
-Every shop card now has:
-- Add to Bag
-- Checkout
+## New D1 migration
 
-Checkout adds the default first size/color. Customers who want another size/color should open the product page and select it before adding/buying.
+v27 adds:
 
-## Rojana Ek Ghanta
-The website gallery now uses T-shirt mockups rather than showing only isolated/sticker artwork.
-The original transparent print-ready PNG files remain under:
+```text
+cloudflare-worker/migrations/0010_product_reviews.sql
+```
 
-`products/oversized/rojana-ek-ghanta/print-ready/`
+Apply migrations before deploying the v27 Worker:
 
-## Payment security
-Pricing is recalculated on the Cloudflare Worker. The Worker imports a generated product price catalogue from:
+```powershell
+cd cloudflare-worker
+npm install
+npx wrangler d1 migrations apply DB --remote
+npm run deploy
+```
 
-`cloudflare-worker/src/catalog.js`
+## Normal product / price update
 
-Run `python scripts/build_products.py` after product/pricing changes before deploying the Worker.
+Edit `pricing.json` and/or product metadata, then from the project root:
 
-The website remains in `prelaunch` checkout mode until Razorpay TEST setup is complete.
+```powershell
+python scripts/build_products.py
+python scripts/validate_release.py
+```
 
+Commit the generated files together with your changes:
 
-## v9 — shipping included display
+```text
+assets/generated-products.json
+assets/generated-products.js
+assets/generated-pricing.js
+cloudflare-worker/src/catalog.js
+```
 
-Checkout now keeps the advertised product total stable.
+Because the Worker validates products and prices server-side, deploy it after catalogue/price changes:
 
-### Orders below ₹499
-Example COD on a ₹449 product:
+```powershell
+cd cloudflare-worker
+npm run deploy
+```
 
-- Product total: ₹749
-- Shipping: ~~₹98~~
-- Shipping included: −₹98
-- Final payable: ₹749
+## Optional WhatsApp support
 
-Example prepaid on a ₹749 product:
+In `assets/config.js`, set the public support number with country code and digits only:
 
-- Product total: ₹749
-- PREPAID50: −₹50
-- Shipping: ~~₹68~~
-- Shipping included: −₹68
-- Final payable: ₹699
+```js
+whatsappNumber:"9198XXXXXXXX"
+```
 
-### Orders ₹499+
-Shipping is shown simply as `FREE`.
+Leave it blank to hide the button.
 
-The same pricing rule is recalculated in the Cloudflare Worker so the browser and payment amount cannot disagree.
+## Optional real promotion countdown
 
+In `assets/config.js`:
 
-## v10 — owner notifications + order admin
+```js
+promotion:{endsAt:"2026-10-01T23:59:59+05:30"}
+```
 
-New:
-- owner email notification on new COD orders,
-- owner email notification only after prepaid order becomes PAID,
-- Resend integration from the Cloudflare Worker,
-- duplicate owner-email prevention,
-- secure `/admin.html` dashboard,
-- private bearer-token admin API,
-- order search/filter,
-- detailed customer/address/item/payment view,
-- operational status updates,
-- COD confirmation workflow,
-- T-Adda handoff status,
-- order timeline/events,
-- manual owner-email resend,
-- no customer data exposed by the public order-status endpoint.
+Leave `endsAt` blank when there is no genuine deadline. The site does not run a fake resetting countdown.
 
-See:
-- `ORDER-MANAGEMENT.md`
-- `cloudflare-worker/README.md`
+## Secrets
 
+Never commit actual values for:
 
-## v11 — order integrity
+- `RAZORPAY_KEY_SECRET`
+- `RAZORPAY_WEBHOOK_SECRET`
+- `ADMIN_TOKEN`
+- `RESEND_API_KEY`
+- `AUTH_SECRET`
 
-This release fixes the prepaid/COD status mixing seen in the admin dashboard.
+Use Cloudflare secrets with `npx wrangler secret put ...`.
 
-New protections:
-- prepaid orders cannot be assigned COD statuses,
-- COD orders cannot be assigned prepaid payment statuses,
-- old mismatched test orders are repaired by migration,
-- TEST/LIVE environment is stored per order,
-- dashboard filters: ALL / TEST / COD PENDING / PREPAID PENDING / PAID,
-- payment-method-specific status dropdowns,
-- red integrity warning if a mismatched legacy record somehow appears,
-- live Worker URL is already configured in `assets/config.js`.
+## Before live deployment
 
-
-## v12
-- Customer order emails
-- Passwordless account login
-- My Orders history
-- Customer status emails
-- Required checkout email
-- Admin resend customer email
-- TEST/LIVE Razorpay mismatch guard
-- Live Worker URL retained
-
-
-## v13 — pre-live storefront cleanup
-
-- Removed the Rojana Ek Ghanta campaign from the homepage hero.
-- Fixed the homepage broken image reference.
-- Homepage now uses the existing Core 220 black tee image.
-- Rojana Ek Ghanta remains available as a normal shop product.
-- Keeps customer accounts, My Orders, admin dashboard, Razorpay backend and order emails from v12.
-- ORDER_ENVIRONMENT remains TEST until the final live switch.
-
-
-## v14 — manual pricing baseline
-
-Current launch prices:
-- Rojana Ek Ghanta Oversized Tee: ₹899 / compare-at ₹1,299
-- Ghost Compass Oversized Tee: ₹899 / compare-at ₹1,299
-- Core 220 Oversized Tee: ₹749 / compare-at ₹999
-
-Future product pricing should be changed in each product's `product.json`, then rebuild with:
-
-`python scripts/build_products.py`
-
-See `PRICE-UPDATE-GUIDE.md`.
-
-## v15 — Security Hardened
-
-Adds D1 rate limiting, strict browser-origin checks, request size limits, security headers, exact Razorpay payment amount verification, safer webhook state handling, and migration `0005_security_hardening.sql`.
-
-Read `SECURITY-V15.md` before deployment. Apply the D1 migration before deploying the Worker.
-
-## v16 — Customer Invoice + PDF Download
-
-v16 adds authenticated invoice issuance and PDF downloads for customers and admins. Apply `0006_customer_invoices.sql` before deploying. Seller address is intentionally blank and must be configured before new invoices can be issued. See `INVOICES-V16.md`.
-
-
-## v17 — Returns & Refunds
-Secure customer return requests, private R2 evidence uploads, admin review, replacement tracking, and Razorpay prepaid refunds. See `RETURNS-V17.md`.
-
-
-## v17.1 — refund UX + partial/full semantics
-
-Added:
-- all admin popup success/error messages render inside the popup,
-- smaller responsive/scrollable admin modal,
-- TEST orders show `REFUND DISABLED — TEST ORDER`,
-- Worker enforces LIVE-order + LIVE-backend for real refunds,
-- partial refunds use `PARTIALLY_REFUNDED`,
-- full refunds use `REFUNDED`,
-- customer wording is `Partial Refund Processed` / `Refund Processed`,
-- customer is told bank/UPI credit may take up to 5–7 business days,
-- migration `0008_refund_ux_semantics.sql` repairs old partial refunds previously labelled as full refunds.
-
-See `V17_1-REFUND-UX.md`.
-
-
-## v17.2 — safe TEST-order cleanup
-
-Added manual cleanup scripts:
-- `cloudflare-worker/scripts/cleanup_test_orders_preview.sql`
-- `cloudflare-worker/scripts/cleanup_test_orders.sql`
-
-These are intentionally not migrations. See `TEST-ORDER-CLEANUP.md`.
-
-
-## v18.1 SEO
-See `V18_1-SEO.md`. Adds homepage entity schema, full product sitemap and dynamic Product SEO/schema without changing commerce logic.
+1. Preserve/restore the real `products/` folder.
+2. Run the product build and release validator.
+3. Apply all pending D1 migrations including `0010_product_reviews.sql`.
+4. Deploy the Worker.
+5. Push the static site.
+6. Test product page, Add to Cart, prepaid, COD, My Orders, Track Order and a delivered-order review flow.

@@ -3,9 +3,13 @@ window.TANVRA_CONFIG={
   currency:"INR",
   supportEmail:"tanvra.in@zohomail.in",
   instagram:"https://instagram.com/weartanvra",
+  whatsappNumber:"", // Optional: country code + number, digits only. Example: 9198XXXXXXXX
 
   // Add your Meta Pixel ID here when available. Event hooks are already wired.
   analytics:{metaPixelId:"1055492107356995"},
+
+  // Optional real promotion deadline. Leave blank to hide the countdown.
+  promotion:{endsAt:""},
 
   // Keep prelaunch until Razorpay TEST setup is complete.
   checkoutMode:"razorpay",

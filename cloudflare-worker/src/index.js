@@ -1,6 +1,5 @@
 import { PRODUCTS, PRODUCT_VARIANTS } from './catalog.js';
 
-const SIZES = new Set(['S','M','L','XL']);
 const ADMIN_STATUSES = new Set([
   'COD_CONFIRMATION_REQUIRED',
   'COD_CONFIRMED',
@@ -49,11 +48,6 @@ function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalEmail(v))
 
 
 const SECURITY_JSON_LIMIT = 32 * 1024;
-const PUBLIC_POST_PATHS = new Set([
-  '/api/auth/request-code','/api/auth/verify-code','/api/auth/logout',
-  '/api/create-order','/api/verify-payment','/api/cod-order'
-]);
-
 function clientIp(req){
   return clean(req.headers.get('CF-Connecting-IP') || req.headers.get('x-forwarded-for') || 'unknown',80);
 }
@@ -814,6 +808,28 @@ export default {
       }
 
 
+      // Public product reviews contain no customer email/order identifiers.
+      if(req.method==='GET' && url.pathname==='/api/reviews'){
+        await enforceRateLimit(env,`reviews-read:${clientIp(req)}`,120,300);
+        const productId=clean(url.searchParams.get('product_id'),100);
+        if(!productId || !PRODUCT_VARIANTS[productId]) return json({error:'Unknown product'},404,origin);
+        const summary=await env.DB.prepare(`SELECT COUNT(*) AS count, ROUND(AVG(rating),1) AS average FROM product_reviews WHERE product_id=? AND status='APPROVED'`).bind(productId).first();
+        const result=await env.DB.prepare(`SELECT id,rating,title,body,display_name,created_at FROM product_reviews WHERE product_id=? AND status='APPROVED' ORDER BY created_at DESC LIMIT 20`).bind(productId).all();
+        return json({product_id:productId,count:Number(summary?.count||0),average:Number(summary?.average||0),reviews:result.results||[]},200,origin);
+      }
+
+      // Order tracking requires both the order reference and the matching checkout email.
+      if(req.method==='POST' && url.pathname==='/api/track-order'){
+        requireAllowedOrigin(req,env);
+        await enforceRateLimit(env,`track-order:${clientIp(req)}`,20,600);
+        const body=await readJson(req),id=clean(body.order_id,100),email=normalEmail(body.email);
+        if(!id || !validEmail(email)) throw Object.assign(new Error('Enter your order ID and checkout email'),{status:400});
+        const row=await env.DB.prepare(`SELECT id,status,payment_method,created_at,updated_at FROM orders WHERE id=? AND customer_email=?`).bind(id,email).first();
+        if(!row) return json({error:'Order details not found'},404,origin);
+        return json({ok:true,order:row},200,origin);
+      }
+
+
       // ---------- Customer passwordless account ----------
       if(req.method==='POST' && url.pathname==='/api/auth/request-code'){
         requireAllowedOrigin(req,env);
@@ -893,6 +909,32 @@ export default {
         return json({orders,email:s.email},200,origin);
       }
 
+
+      if(req.method==='POST' && url.pathname==='/api/account/reviews'){
+        requireAllowedOrigin(req,env);
+        const sess=await requireCustomer(req,env);
+        await enforceRateLimit(env,`review-create:${sess.email}`,12,86400);
+        const body=await readJson(req);
+        const orderId=clean(body.order_id,100),productId=clean(body.product_id,100);
+        const rating=Number(body.rating),title=clean(body.title,80),reviewBody=clean(body.body,1000),displayName=clean(body.display_name,50);
+        if(!orderId || !productId || !PRODUCT_VARIANTS[productId]) throw Object.assign(new Error('Invalid review request'),{status:400});
+        if(!Number.isInteger(rating) || rating<1 || rating>5) throw Object.assign(new Error('Choose a rating from 1 to 5'),{status:400});
+        if(reviewBody.length<5) throw Object.assign(new Error('Please write a short review'),{status:400});
+        const order=await env.DB.prepare(`SELECT id,status,items_json FROM orders WHERE id=? AND customer_email=?`).bind(orderId,sess.email).first();
+        if(!order) return json({error:'Order not found'},404,origin);
+        if(order.status!=='DELIVERED') return json({error:'Reviews are available after delivery'},409,origin);
+        let items=[];try{items=JSON.parse(order.items_json||'[]')}catch{}
+        if(!items.some(i=>i.product_id===productId)) return json({error:'Product is not part of this order'},409,origin);
+        const id=ref('WTR'),ts=now();
+        try{
+          await env.DB.prepare(`INSERT INTO product_reviews(id,order_id,customer_email,product_id,rating,title,body,display_name,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)`)
+            .bind(id,orderId,sess.email,productId,rating,title||null,reviewBody,displayName||null,'APPROVED',ts,ts).run();
+        }catch(e){
+          if(String(e?.message||'').toLowerCase().includes('unique')) return json({error:'Review already submitted for this product'},409,origin);
+          throw e;
+        }
+        return json({ok:true,review:{id,product_id:productId,rating,title,body:reviewBody,display_name:displayName||null,created_at:ts}},201,origin);
+      }
 
       if(req.method==='POST' && url.pathname==='/api/account/returns'){
         requireAllowedOrigin(req,env);
@@ -1365,7 +1407,7 @@ export default {
       if(message==='UNAUTHORIZED') return json({error:'Unauthorized'},401,origin);
       const explicit=Number(e?.status);
       if(explicit>=400&&explicit<500) return json({error:message||'Request failed'},explicit,origin);
-      const safe=/^(Missing |Cart is empty|Unknown product:|Invalid size|Invalid colour|Invalid payment method|Phone must|Pincode must|Enter a valid email|Prepaid endpoint only|COD endpoint only|Invalid status|Invalid return status|Choose |Please describe|Invalid checkout request|Order not found|Return request not found|Evidence |Maximum 4|This return request is closed|Checkout pricing is temporarily unavailable)/.test(message);
+      const safe=/^(Missing |Cart is empty|Unknown product:|Unknown product|Invalid size|Invalid colour|Invalid payment method|Phone must|Pincode must|Enter a valid email|Enter your order ID|Prepaid endpoint only|COD endpoint only|Invalid status|Invalid return status|Invalid review request|Choose |Please describe|Please write|Reviews are available|Product is not part|Review already submitted|Invalid checkout request|Order not found|Order details not found|Return request not found|Evidence |Maximum 4|This return request is closed|Checkout pricing is temporarily unavailable)/.test(message);
       if(safe) return json({error:message},400,origin);
       console.error('WEAR TANVRA worker error',message);
       return json({error:'Something went wrong. Please try again.'},500,origin);

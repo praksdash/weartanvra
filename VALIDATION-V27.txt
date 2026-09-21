@@ -1,0 +1,13 @@
+TANVRA v27 validation
+=====================
+JavaScript syntax: PASS
+Python syntax: PASS
+Release validator: PASS (10 products, 0 errors)
+D1 migrations 0001-0010 sequential SQLite test: PASS
+HTML local reference check: PASS
+Secrets/private key files bundled: NONE FOUND
+products/ bundled: NO (intentionally omitted by user)
+
+IMPORTANT
+Restore/preserve the real products/ folder before running build_products.py or npm run deploy.
+Apply migration 0010_product_reviews.sql before deploying the v27 Worker.
